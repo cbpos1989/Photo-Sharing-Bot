@@ -22,7 +22,7 @@ client = MadBot()
 
 @client.tree.command(name="photos", description="Get the link to the MAD MTB Google Photos album")
 async def photos(interaction: discord.Interaction):
-    album_url = ALBUM_URL
+    album_url = os.getenv('ALBUM_URL')
 
     embed = discord.Embed(
         title="📸 MAD MTB Photo Vault",
