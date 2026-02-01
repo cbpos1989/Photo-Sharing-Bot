@@ -115,7 +115,7 @@ class OnboardingView(discord.ui.View):
             print(f"Target Role Position: {role.position}")
 
             if bot_member.top_role.position <= role.position:
-            print("LOGIC ERROR: Bot is lower or equal to the target role!")
+                print("LOGIC ERROR: Bot is lower or equal to the target role!")
 
             try:
                 print(f"Attempting to assign role {role} to user {interaction.user}")
