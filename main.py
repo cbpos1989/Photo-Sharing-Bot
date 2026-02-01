@@ -131,19 +131,17 @@ class OnboardingView(discord.ui.View):
         custom_id="mad_paid_member"
     )
     async def paid_member(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer(ephemeral=True)
-
         await self.assign_basic_role(interaction)
 
         admin_channel = interaction.client.get_channel(1467562740238389471)
 
-        await admin_channel.followup.send(
+        await admin_channel.response.send_message(
             f"🔔 **Verification Needed:**\n"
             f"User: {interaction.user.mention} ({interaction.user.display_name})\n"
             # f"Hey <@&{1098261430647660624}>, please verify this member against the CI Active Members list!‍"
         )
 
-        await interaction.followup.send(
+        await interaction.response.send_message(
             "Got it! I've pinged the committee. We'll verify your membership and get you sorted shortly. 🤘",
             ephemeral=True
         )
@@ -154,11 +152,9 @@ class OnboardingView(discord.ui.View):
         custom_id="mad_guest"
     )
     async def guest_member(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer(ephemeral=True)
-
         await self.assign_basic_role(interaction)
 
-        await interaction.followup.send(
+        await interaction.response.send_message(
             f"Welcome to MAD! 🚵‍♂️ Feel free to browse <#{1173658006559408219}> channel in the Public Section or check out <#{1018922510533791868}> and join us for a ride soon!",
             ephemeral=True
         )
