@@ -119,7 +119,7 @@ class OnboardingView(discord.ui.View):
         custom_id="mad_paid_member"
     )
     async def paid_member(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.assign_initial_role(interaction)
+        await self.assign_basic_role(interaction)
 
         # Replace with your actual Admin Channel ID
         admin_channel = interaction.client.get_channel(1467493936636366879)
@@ -140,7 +140,7 @@ class OnboardingView(discord.ui.View):
         custom_id="mad_guest"
     )
     async def guest_member(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.assign_initial_role(interaction)
+        await self.assign_basic_role(interaction)
 
         await interaction.response.send_message(
             f"Welcome to MAD! 🚵‍♂️ Feel free to browse <#{1173658006559408219}> channel in the Public Section or check out <#{1018922510533791868}> and join us for a ride soon!",
