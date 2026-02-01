@@ -110,11 +110,12 @@ class OnboardingView(discord.ui.View):
     )
     async def paid_member(self, interaction: discord.Interaction, button: discord.ui.Button):
         # Replace with your actual Admin Channel ID
-        admin_channel = interaction.client.get_channel(1467493936636366879) 
+        admin_channel = interaction.client.get_channel(1467493936636366879)
 
         await admin_channel.send(
-            f"🔔 **Verification Needed:** {interaction.user.mention} ({interaction.user.display_name}) "
-            "claims to be a paid member. @committee, please verify!"
+            f"🔔 **Verification Needed:**\n"
+            f"User: {interaction.user.mention} ({interaction.user.display_name}) "
+            f"Hey <@&{1098261430647660624}>, please verify this member against the CI list!‍"
         )
         await interaction.response.send_message(
             "Got it! I've pinged the committee. We'll verify your membership and get you sorted shortly. 🤘",
@@ -123,12 +124,12 @@ class OnboardingView(discord.ui.View):
 
     @discord.ui.button(
         label="I'm a Guest / New Rider",
-        style=discord.ButtonStyle.gray,
+        style=discord.ButtonStyle.blue,
         custom_id="mad_guest"
     )
     async def guest_member(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(
-            "Welcome to MAD! 🚵‍♂️ Feel free to browse #general channel in the Public Section or check #📣-events and join us for a ride soon!",
+            f"Welcome to MAD! 🚵‍♂️ Feel free to browse <#{1173658006559408219}> channel in the Public Section or check out <#{1018922510533791868}> and join us for a ride soon!",
             ephemeral=True
         )
 
