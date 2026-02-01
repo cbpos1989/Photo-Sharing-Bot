@@ -32,7 +32,27 @@ async def photos(interaction: discord.Interaction):
     embed.add_field(name="How to contribute", value=f"Click [HERE]({album_url}) to view or upload.")
     embed.set_footer(text="Club culture is built on shared shredding!")
 
-    await interaction.response.send_message(embed=embed)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+@client.tree.command(name="spin-template", description="Generate a template for posting a new club spin")
+async def spin_template(interaction: discord.Interaction):
+    # This template is pulled directly from your MAD Committee guidelines
+    template = (
+        "**MAD MTB Spin Details**\n"
+        "```\n"
+        "Date & Time: \n"
+        "Meeting Point: \n"
+        "Route Distance (km): \n"
+        "Elevation Gain (m): \n"
+        "Technicality: (e.g., Beginner/Intermediate - mentions rock gardens, drops, etc.)\n"
+        "Pace: (e.g., Social/Leisurely/Fast-paced)\n"
+        "Duration: (Approx hours including breaks)\n"
+        "Required Equipment: (e.g., Lights for night rides, extra water)\n"
+        "```\n"
+        "*Tip: Copy the text above and paste it into your new thread in the #spins channel!*"
+    )
+
+    await interaction.response.send_message(template, ephemeral=True)
 
 if __name__ == "__main__":
     client.run(TOKEN)
