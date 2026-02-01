@@ -107,13 +107,23 @@ class OnboardingView(discord.ui.View):
     async def assign_basic_role(self, interaction: discord.Interaction):
         NON_MEMBER_ROLE_ID = 1098262331823231007
         role = interaction.guild.get_role(NON_MEMBER_ROLE_ID)
+        bot_member = interaction.guild.me # The bot itself in this server
 
-        if role:
+        if role and bot_member:
+            # Debugging Output
+            print(f"Bot Top Role Position: {bot_member.top_role.position}")
+            print(f"Target Role Position: {role.position}")
+
+            if bot_member.top_role.position <= role.position:
+            print("LOGIC ERROR: Bot is lower or equal to the target role!")
+
             try:
                 print(f"Attempting to assign role {role} to user {interaction.user}")
                 await interaction.user.add_roles(role)
             except discord.Forbidden:
-                print("ERROR: Bot role is too low in the hierarchy!")
+                error_msg = (f"FORBIDDEN: Bot role ({bot_member.top_role.name} pos {bot_member.top_role.position}) "
+                         f"is not high enough to manage {role.name} (pos {role.position}).")
+                print(error_msg)
         else:
             print(f"Error: Role ID {NON_MEMBER_ROLE_ID} not found!")
 
