@@ -121,9 +121,7 @@ class OnboardingView(discord.ui.View):
                 print(f"Attempting to assign role {role} to user {interaction.user}")
                 await interaction.user.add_roles(role)
             except discord.Forbidden:
-                error_msg = (f"FORBIDDEN: Bot role ({bot_member.top_role.name} pos {bot_member.top_role.position}) "
-                         f"is not high enough to manage {role.name} (pos {role.position}).")
-                print(error_msg)
+                print("FORBIDDEN: Still hitting hierarchy issues despite code execution.")
         else:
             print(f"Error: Role ID {NON_MEMBER_ROLE_ID} not found!")
 
@@ -139,7 +137,7 @@ class OnboardingView(discord.ui.View):
 
         admin_channel = interaction.client.get_channel(1467562740238389471)
 
-        await admin_channel.send(
+        await admin_channel.followup.send(
             f"🔔 **Verification Needed:**\n"
             f"User: {interaction.user.mention} ({interaction.user.display_name})\n"
             # f"Hey <@&{1098261430647660624}>, please verify this member against the CI Active Members list!‍"
