@@ -20,6 +20,9 @@ class MadBot(discord.Client):
         self.tree = app_commands.CommandTree(self)
 
     async def setup_hook(self):
+        # 1. Register persistent views (Onboarding Buttons)
+        self.add_view(OnboardingView())
+
         # This syncs the slash commands to the Discord API
         await self.tree.sync()
         print(f"Synced slash commands for {self.user}")
@@ -58,6 +61,76 @@ async def spin_template(interaction: discord.Interaction):
     )
 
     await interaction.response.send_message(template, ephemeral=True)
+
+@client.tree.command(name="test-onboarding", description="Test the onboarding message and buttons")
+async def test_onboarding(interaction: discord.Interaction):
+    # This simulates the message that would be sent to a new joiner
+    embed = discord.Embed(
+        title=f"Welcome to MAD MTB! 🚵‍♂️",
+        description=(
+            "We're stoked to have you. To get you to the right trails, "
+            "please select your status below:"
+        ),
+        color=0x78be20 # MAD Green
+    )
+
+    # We send it ephemerally so only you see the test, or normally if you want to show other admins
+    await interaction.response.send_message(
+        content=f"Hey {interaction.user.mention}, this is a test of the onboarding system!",
+        embed=embed,
+        view=OnboardingView(),
+        ephemeral=True
+    )
+
+# @client.event
+# async def on_member_join(member):
+#     welcome_channel = client.get_channel(1018922510533791867)
+#
+#     embed = discord.Embed(
+#         title=f"Welcome to MAD MTB, {member.display_name}! 🌲",
+#         description=(
+#             "We're glad to have you here. To get you to the right trails, "
+#             "please select your role below:"
+#         ),
+#         color=0x78be20
+#     )
+#
+#     # This attaches the buttons we created above to the welcome message
+#     await welcome_channel.send(content=f"Hey {member.mention}!", embed=embed, view=OnboardingView())
+
+class OnboardingView(discord.ui.View):
+    def __init__(self):
+        # timeout=None is key for persistence!
+        super().__init__(timeout=None)
+
+    @discord.ui.button(
+        label="I'm a paid MAD Member",
+        style=discord.ButtonStyle.green,
+        custom_id="mad_paid_member"
+    )
+    async def paid_member(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Replace with your actual Admin Channel ID
+        admin_channel = interaction.client.get_channel(1467493936636366879) 
+
+        await admin_channel.send(
+            f"🔔 **Verification Needed:** {interaction.user.mention} ({interaction.user.display_name}) "
+            "claims to be a paid member. @committee, please verify!"
+        )
+        await interaction.response.send_message(
+            "Got it! I've pinged the committee. We'll verify your membership and get you sorted shortly. 🤘",
+            ephemeral=True
+        )
+
+    @discord.ui.button(
+        label="I'm a Guest / New Rider",
+        style=discord.ButtonStyle.gray,
+        custom_id="mad_guest"
+    )
+    async def guest_member(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message(
+            "Welcome to MAD! 🚵‍♂️ Feel free to browse #general channel in the Public Section or check #📣-events and join us for a ride soon!",
+            ephemeral=True
+        )
 
 if __name__ == "__main__":
     client.run(TOKEN)
