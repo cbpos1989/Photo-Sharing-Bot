@@ -105,7 +105,6 @@ class OnboardingView(discord.ui.View):
         super().__init__(timeout=None)
 
     async def assign_basic_role(self, interaction: discord.Interaction):
-        # Replace with your actual Non-Member Role ID (as an int)
         NON_MEMBER_ROLE_ID = 1098262331823231007
         role = interaction.guild.get_role(NON_MEMBER_ROLE_ID)
 
@@ -123,17 +122,19 @@ class OnboardingView(discord.ui.View):
         custom_id="mad_paid_member"
     )
     async def paid_member(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
+
         await self.assign_basic_role(interaction)
 
-        # Replace with your actual Admin Channel ID
-        admin_channel = interaction.client.get_channel(1467493936636366879)
+        admin_channel = interaction.client.get_channel(1467562740238389471)
 
         await admin_channel.send(
             f"🔔 **Verification Needed:**\n"
             f"User: {interaction.user.mention} ({interaction.user.display_name})\n"
             f"Hey <@&{1098261430647660624}>, please verify this member against the CI Active Members list!‍"
         )
-        await interaction.response.send_message(
+
+        await interaction.followup.send(
             "Got it! I've pinged the committee. We'll verify your membership and get you sorted shortly. 🤘",
             ephemeral=True
         )
@@ -144,9 +145,11 @@ class OnboardingView(discord.ui.View):
         custom_id="mad_guest"
     )
     async def guest_member(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
+
         await self.assign_basic_role(interaction)
 
-        await interaction.response.send_message(
+        await interaction.followup.send(
             f"Welcome to MAD! 🚵‍♂️ Feel free to browse <#{1173658006559408219}> channel in the Public Section or check out <#{1018922510533791868}> and join us for a ride soon!",
             ephemeral=True
         )
