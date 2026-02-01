@@ -124,7 +124,7 @@ class OnboardingView(discord.ui.View):
 
     @discord.ui.button(
         label="I'm a Guest / New Rider",
-        style=discord.ButtonStyle.blue,
+        style=discord.ButtonStyle.blurple,
         custom_id="mad_guest"
     )
     async def guest_member(self, interaction: discord.Interaction, button: discord.ui.Button):
