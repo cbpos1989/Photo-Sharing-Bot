@@ -107,23 +107,9 @@ class OnboardingView(discord.ui.View):
     async def assign_basic_role(self, interaction: discord.Interaction):
         NON_MEMBER_ROLE_ID = 1098262331823231007
         role = interaction.guild.get_role(NON_MEMBER_ROLE_ID)
-        bot_member = interaction.guild.me # The bot itself in this server
 
-        if role and bot_member:
-            # Debugging Output
-            print(f"Bot Top Role Position: {bot_member.top_role.position}")
-            print(f"Target Role Position: {role.position}")
-            permissions = bot_member.guild_permissions
-            print(f"DEBUG: Does Bot have Manage Roles permission? {permissions.manage_roles}")
-
-            if bot_member.top_role.position <= role.position:
-                print("LOGIC ERROR: Bot is lower or equal to the target role!")
-
-            try:
-                print(f"Attempting to assign role {role} to user {interaction.user}")
-                await interaction.user.add_roles(role)
-            except discord.Forbidden:
-                print("FORBIDDEN: Still hitting hierarchy issues despite code execution.")
+        if role:
+            await interaction.user.add_roles(role)
         else:
             print(f"Error: Role ID {NON_MEMBER_ROLE_ID} not found!")
 
@@ -133,6 +119,8 @@ class OnboardingView(discord.ui.View):
         custom_id="mad_paid_member"
     )
     async def paid_member(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
+
         await self.assign_basic_role(interaction)
 
         admin_channel = interaction.client.get_channel(1467562740238389471)
@@ -143,7 +131,7 @@ class OnboardingView(discord.ui.View):
             # f"Hey <@&{1098261430647660624}>, please verify this member against the CI Active Members list!‍"
         )
 
-        await interaction.response.send_message(
+        await interaction.response.followup.send(
             "Got it! I've pinged the committee. We'll verify your membership and get you sorted shortly. 🤘",
             ephemeral=True
         )
@@ -154,9 +142,11 @@ class OnboardingView(discord.ui.View):
         custom_id="mad_guest"
     )
     async def guest_member(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
+
         await self.assign_basic_role(interaction)
 
-        await interaction.response.send_message(
+        await interaction.response.followup.send(
             f"Welcome to MAD! 🚵‍♂️ Feel free to browse <#{1173658006559408219}> channel in the Public Section or check out <#{1018922510533791868}> and join us for a ride soon!",
             ephemeral=True
         )
