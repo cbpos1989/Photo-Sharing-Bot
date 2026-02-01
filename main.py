@@ -15,8 +15,9 @@ if not ALBUM_URL:
 
 class MadBot(discord.Client):
     def __init__(self):
-        # Default intents are fine for a basic slash command bot
-        super().__init__(intents=discord.Intents.default())
+        intents = discord.Intents.default()
+        intents.members = True  # Allows the bot to see and manage users
+        super().__init__(intents=intents)
         self.tree = app_commands.CommandTree(self)
 
     async def setup_hook(self):
@@ -109,7 +110,10 @@ class OnboardingView(discord.ui.View):
         role = interaction.guild.get_role(NON_MEMBER_ROLE_ID)
 
         if role:
-            await interaction.user.add_roles(role)
+            try:
+                await interaction.user.add_roles(role)
+            except discord.Forbidden:
+                print("ERROR: Bot role is too low in the hierarchy!")
         else:
             print(f"Error: Role ID {NON_MEMBER_ROLE_ID} not found!")
 
