@@ -103,19 +103,31 @@ class OnboardingView(discord.ui.View):
         # timeout=None is key for persistence!
         super().__init__(timeout=None)
 
+    async def assign_basic_role(self, interaction: discord.Interaction):
+        # Replace with your actual Non-Member Role ID (as an int)
+        NON_MEMBER_ROLE_ID = 1098262331823231007
+        role = interaction.guild.get_role(NON_MEMBER_ROLE_ID)
+
+        if role:
+            await interaction.user.add_roles(role)
+        else:
+            print(f"Error: Role ID {NON_MEMBER_ROLE_ID} not found!")
+
     @discord.ui.button(
         label="I'm a paid MAD Member",
         style=discord.ButtonStyle.green,
         custom_id="mad_paid_member"
     )
     async def paid_member(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.assign_initial_role(interaction)
+
         # Replace with your actual Admin Channel ID
         admin_channel = interaction.client.get_channel(1467493936636366879)
 
         await admin_channel.send(
             f"🔔 **Verification Needed:**\n"
-            f"User: {interaction.user.mention} ({interaction.user.display_name}) "
-            f"Hey <@&{1098261430647660624}>, please verify this member against the CI list!‍"
+            f"User: {interaction.user.mention} ({interaction.user.display_name})\n"
+            f"Hey <@&{1098261430647660624}>, please verify this member against the CI Active Members list!‍"
         )
         await interaction.response.send_message(
             "Got it! I've pinged the committee. We'll verify your membership and get you sorted shortly. 🤘",
@@ -128,6 +140,8 @@ class OnboardingView(discord.ui.View):
         custom_id="mad_guest"
     )
     async def guest_member(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.assign_initial_role(interaction)
+
         await interaction.response.send_message(
             f"Welcome to MAD! 🚵‍♂️ Feel free to browse <#{1173658006559408219}> channel in the Public Section or check out <#{1018922510533791868}> and join us for a ride soon!",
             ephemeral=True
