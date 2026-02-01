@@ -63,41 +63,41 @@ async def spin_template(interaction: discord.Interaction):
 
     await interaction.response.send_message(template, ephemeral=True)
 
-@client.tree.command(name="test-onboarding", description="Test the onboarding message and buttons")
-async def test_onboarding(interaction: discord.Interaction):
-    # This simulates the message that would be sent to a new joiner
-    embed = discord.Embed(
-        title=f"Welcome to MAD MTB! 🚵‍♂️",
-        description=(
-            "We're stoked to have you. To get you to the right trails, "
-            "please select your status below:"
-        ),
-        color=0x78be20 # MAD Green
-    )
-
-    # We send it ephemerally so only you see the test, or normally if you want to show other admins
-    await interaction.response.send_message(
-        content=f"Hey {interaction.user.mention}, this is a test of the onboarding system!",
-        embed=embed,
-        view=OnboardingView(),
-        ephemeral=True
-    )
-
-# @client.event
-# async def on_member_join(member):
-#     welcome_channel = client.get_channel(1018922510533791867)
-#
+# @client.tree.command(name="test-onboarding", description="Test the onboarding message and buttons")
+# async def test_onboarding(interaction: discord.Interaction):
+#     # This simulates the message that would be sent to a new joiner
 #     embed = discord.Embed(
-#         title=f"Welcome to MAD MTB, {member.display_name}! 🌲",
+#         title=f"Welcome to MAD MTB! 🚵‍♂️",
 #         description=(
-#             "We're glad to have you here. To get you to the right trails, "
-#             "please select your role below:"
+#             "We're stoked to have you. To get you to the right trails, "
+#             "please select your status below:"
 #         ),
-#         color=0x78be20
+#         color=0x78be20 # MAD Green
 #     )
 #
-#     # This attaches the buttons we created above to the welcome message
-#     await welcome_channel.send(content=f"Hey {member.mention}!", embed=embed, view=OnboardingView())
+#     # We send it ephemerally so only you see the test, or normally if you want to show other admins
+#     await interaction.followup.send(
+#         content=f"Hey {interaction.user.mention}, this is a test of the onboarding system!",
+#         embed=embed,
+#         view=OnboardingView(),
+#         ephemeral=True
+#     )
+
+@client.event
+async def on_member_join(member):
+    welcome_channel = client.get_channel(1018922510533791867)
+
+    embed = discord.Embed(
+        title=f"Welcome to MAD MTB, {member.display_name}! 🌲",
+        description=(
+            "We're glad to have you here. To get you to the right trails, "
+            "please select your role below:"
+        ),
+        color=0x78be20
+    )
+
+    # This attaches the buttons we created above to the welcome message
+    await welcome_channel.send(content=f"Hey {member.mention}!", embed=embed, view=OnboardingView())
 
 class OnboardingView(discord.ui.View):
     def __init__(self):
