@@ -110,6 +110,7 @@ class OnboardingView(discord.ui.View):
 
         if role:
             try:
+                print(f"Attempting to assign role {role} to user {interaction.user}")
                 await interaction.user.add_roles(role)
             except discord.Forbidden:
                 print("ERROR: Bot role is too low in the hierarchy!")
@@ -131,7 +132,7 @@ class OnboardingView(discord.ui.View):
         await admin_channel.send(
             f"🔔 **Verification Needed:**\n"
             f"User: {interaction.user.mention} ({interaction.user.display_name})\n"
-            f"Hey <@&{1098261430647660624}>, please verify this member against the CI Active Members list!‍"
+            # f"Hey <@&{1098261430647660624}>, please verify this member against the CI Active Members list!‍"
         )
 
         await interaction.followup.send(
