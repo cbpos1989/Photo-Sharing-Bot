@@ -83,21 +83,21 @@ async def spin_template(interaction: discord.Interaction):
 #         ephemeral=True
 #     )
 
-@client.event
-async def on_member_join(member):
-    welcome_channel = client.get_channel(1018922510533791867)
-
-    embed = discord.Embed(
-        title=f"Welcome to MAD MTB, {member.display_name}! 🌲",
-        description=(
-            "We're glad to have you here. To get you to the right trails, "
-            "please select your role below:"
-        ),
-        color=0x78be20
-    )
-
-    # This attaches the buttons we created above to the welcome message
-    await welcome_channel.send(content=f"Hey {member.mention}!", embed=embed, view=OnboardingView())
+# @client.event
+# async def on_member_join(member):
+#     welcome_channel = client.get_channel(1018922510533791867)
+#
+#     embed = discord.Embed(
+#         title=f"Welcome to MAD MTB, {member.display_name}! 🌲",
+#         description=(
+#             "We're glad to have you here. To get you to the right trails, "
+#             "please select your role below:"
+#         ),
+#         color=0x78be20
+#     )
+#
+#     # This attaches the buttons we created above to the welcome message
+#     await welcome_channel.send(content=f"Hey {member.mention}!", embed=embed, view=OnboardingView())
 
 class OnboardingView(discord.ui.View):
     def __init__(self):
