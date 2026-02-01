@@ -6,6 +6,12 @@ from dotenv import load_dotenv
 # Load variables from .env file
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+ALBUM_URL = os.getenv('ALBUM_URL')
+
+if not TOKEN:
+    raise ValueError("ERROR: DISCORD_TOKEN is missing from environment variables!")
+if not ALBUM_URL:
+    print("WARNING: ALBUM_URL is missing. /photos command might fail.")
 
 class MadBot(discord.Client):
     def __init__(self):
@@ -22,14 +28,13 @@ client = MadBot()
 
 @client.tree.command(name="photos", description="Get the link to the MAD MTB Google Photos album")
 async def photos(interaction: discord.Interaction):
-    album_url = os.getenv('ALBUM_URL')
 
     embed = discord.Embed(
         title="📸 MAD MTB Photo Vault",
         description="Don't let those trail gems sit on your phone! Upload your photos and videos to our shared album.",
         color=0x78be20  # MAD Green
     )
-    embed.add_field(name="How to contribute", value=f"Click [HERE]({album_url}) to view or upload.")
+    embed.add_field(name="How to contribute", value=f"Click [HERE]({ALBUM_URL}) to view or upload.")
     embed.set_footer(text="Club culture is built on shared shredding!")
 
     await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -40,14 +45,14 @@ async def spin_template(interaction: discord.Interaction):
     template = (
         "**MAD MTB Spin Details**\n"
         "```\n"
-        "Date & Time: \n"
-        "Meeting Point: \n"
-        "Route Distance (km): \n"
-        "Elevation Gain (m): \n"
-        "Technicality: (e.g., Beginner/Intermediate - mentions rock gardens, drops, etc.)\n"
-        "Pace: (e.g., Social/Leisurely/Fast-paced)\n"
-        "Duration: (Approx hours including breaks)\n"
-        "Required Equipment: (e.g., Lights for night rides, extra water)\n"
+        "**Date & Time:** \n"
+        "**Meeting Point:** \n"
+        "**Route Distance (km):** \n"
+        "**Elevation:** (e.g., Steep, Medium, Flat etc.) \n"
+        "**Technicality:** (e.g., Beginner/Intermediate/Difficult)\n"
+        "**Pace:** (e.g., Social/Leisurely/Fast-paced)\n"
+        "**Duration:** (Approx hours including breaks)\n"
+        "**Required Equipment:** (e.g., Lights for night rides, extra water)\n"
         "```\n"
         "*Tip: Copy the text above and paste it into your new thread in the #spins channel!*"
     )
