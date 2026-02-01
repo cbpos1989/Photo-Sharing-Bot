@@ -113,6 +113,8 @@ class OnboardingView(discord.ui.View):
             # Debugging Output
             print(f"Bot Top Role Position: {bot_member.top_role.position}")
             print(f"Target Role Position: {role.position}")
+            permissions = bot_member.guild_permissions
+            print(f"DEBUG: Does Bot have Manage Roles permission? {permissions.manage_roles}")
 
             if bot_member.top_role.position <= role.position:
                 print("LOGIC ERROR: Bot is lower or equal to the target role!")
@@ -135,7 +137,7 @@ class OnboardingView(discord.ui.View):
 
         admin_channel = interaction.client.get_channel(1467562740238389471)
 
-        await admin_channel.response.send_message(
+        await admin_channel.send(
             f"🔔 **Verification Needed:**\n"
             f"User: {interaction.user.mention} ({interaction.user.display_name})\n"
             # f"Hey <@&{1098261430647660624}>, please verify this member against the CI Active Members list!‍"
