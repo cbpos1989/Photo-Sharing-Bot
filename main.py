@@ -131,7 +131,7 @@ class OnboardingView(discord.ui.View):
             # f"Hey <@&{1098261430647660624}>, please verify this member against the CI Active Members list!‍"
         )
 
-        await interaction.response.followup.send(
+        await interaction.followup.send(
             "Got it! I've pinged the committee. We'll verify your membership and get you sorted shortly. 🤘",
             ephemeral=True
         )
@@ -146,7 +146,7 @@ class OnboardingView(discord.ui.View):
 
         await self.assign_basic_role(interaction)
 
-        await interaction.response.followup.send(
+        await interaction.followup.send(
             f"Welcome to MAD! 🚵‍♂️ Feel free to browse <#{1173658006559408219}> channel in the Public Section or check out <#{1018922510533791868}> and join us for a ride soon!",
             ephemeral=True
         )
