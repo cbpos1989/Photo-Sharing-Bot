@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 ALBUM_URL = os.getenv('ALBUM_URL')
-WELCOME_CHANNEL_ID = os.getenv('WELCOME_CHANNEL_ID')
-COMMITTEE_CHANNEL_ID = os.getenv('COMMITTEE_CHANNEL_ID')
+WELCOME_CHANNEL_ID = int(os.getenv('WELCOME_CHANNEL_ID'))
+COMMITTEE_CHANNEL_ID = int(os.getenv('COMMITTEE_CHANNEL_ID'))
 
 if not TOKEN:
     raise ValueError("ERROR: DISCORD_TOKEN is missing from environment variables!")
