@@ -88,13 +88,6 @@ async def verify(interaction: discord.Interaction):
         view=OnboardingView(),
         ephemeral=True
     )
-@client.tree.error
-async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-    if isinstance(error, app_commands.CheckFailure):
-        await interaction.response.send_message(
-            "❌ This command only works in the #welcome channel!",
-            ephemeral=True
-        )
 
 # @client.event
 # async def on_member_join(member):
@@ -165,6 +158,30 @@ class OnboardingView(discord.ui.View):
 
         await interaction.followup.send(
             f"Welcome to MAD! 🚵‍♂️ Feel free to browse <#{1173658006559408219}> channel in the Public Section or check out <#{1018922510533791868}> and join us for a ride soon!",
+            ephemeral=True
+        )
+
+@client.tree.error
+async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    # Case 1: The user tried /verify in the wrong channel
+    if isinstance(error, app_commands.CheckFailure):
+        await interaction.response.send_message(
+            "❌ **Not here, rider!** The `/verify` command only works in the #welcome channel. Head over there to get your access! 🚵‍♂️",
+            ephemeral=True
+        )
+
+    # Case 2: The command is on cooldown (prevents spamming)
+    elif isinstance(error, app_commands.CommandOnCooldown):
+        await interaction.response.send_message(
+            f"⏳ Whoa there! Slow down a second. Try again in {error.retry_after:.1f}s.",
+            ephemeral=True
+        )
+
+    # Case 3: The generic "Catch All" for anything else
+    else:
+        print(f"Unhandled Error: {error}") # This still goes to Railway logs for you
+        await interaction.response.send_message(
+            "🔧 **Trail Maintenance!** Something went wrong on my end. Please try again or ping a Committee member if it keeps happening.",
             ephemeral=True
         )
 
