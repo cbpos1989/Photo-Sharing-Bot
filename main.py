@@ -35,6 +35,7 @@ client = MadBot()
 
 @client.tree.command(name="photos", description="Get the link to the MAD MTB Google Photos album")
 async def photos(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=False)
 
     embed = discord.Embed(
         title="📸 MAD MTB Photo Vault",
@@ -44,7 +45,7 @@ async def photos(interaction: discord.Interaction):
     embed.add_field(name="How to contribute", value=f"Click [HERE]({ALBUM_URL}) to view or upload.")
     embed.set_footer(text="Club culture is built on shared shredding!")
 
-    await interaction.response.send_message(embed=embed, ephemeral=False)
+    await interaction.followup.send(embed=embed)
 
 @client.tree.command(name="spin-template", description="Generate a template for posting a new club spin")
 async def spin_template(interaction: discord.Interaction):
