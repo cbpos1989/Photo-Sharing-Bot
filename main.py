@@ -90,25 +90,25 @@ async def verify(interaction: discord.Interaction):
         ephemeral=True
     )
 
-# @client.event
-# async def on_member_join(member):
-#     welcome_channel = client.get_channel(WELCOME_CHANNEL_ID)
-#
-#     if welcome_channel:
-#         embed = discord.Embed(
-#             title=f"A new rider has joined! 🚵‍♂️💨",
-#             description=(
-#                 f"Welcome to the crew, {member.mention}!\n\n"
-#                 "To unlock the club channels and verify your membership, "
-#                 "please type the command below in this channel:\n"
-#                 "### ` /verify `"
-#             ),
-#             color=0x78be20 # MAD Green
-#         )
-#         embed.set_thumbnail(url=member.display_avatar.url)
-#
-#         # We DON'T send the view here. Just the prompt.
-#         await welcome_channel.send(content=f"Welcome {member.mention}!", embed=embed)
+@client.event
+async def on_member_join(member):
+    welcome_channel = client.get_channel(WELCOME_CHANNEL_ID)
+
+    if welcome_channel:
+        embed = discord.Embed(
+            title=f"A new rider has joined! 🚵‍♂️💨",
+            description=(
+                f"Welcome to the crew, {member.mention}!\n\n"
+                "To unlock the club channels and verify your membership, "
+                "please type the command below in this channel:\n"
+                "### ` /verify `"
+            ),
+            color=0x78be20 # MAD Green
+        )
+        embed.set_thumbnail(url=member.display_avatar.url)
+
+        # We DON'T send the view here. Just the prompt.
+        await welcome_channel.send(content=f"Welcome {member.mention}!", embed=embed)
 
 class OnboardingView(discord.ui.View):
     def __init__(self):
