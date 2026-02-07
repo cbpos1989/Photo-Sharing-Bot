@@ -9,6 +9,7 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 ALBUM_URL = os.getenv('ALBUM_URL')
 WELCOME_CHANNEL_ID = int(os.getenv('WELCOME_CHANNEL_ID'))
 COMMITTEE_CHANNEL_ID = int(os.getenv('COMMITTEE_CHANNEL_ID'))
+COMMITTE_ROLE_ID = int(os.getenv('COMMITTE_ROLE_ID'))
 
 if not TOKEN:
     raise ValueError("ERROR: DISCORD_TOKEN is missing from environment variables!")
@@ -134,12 +135,12 @@ class OnboardingView(discord.ui.View):
         await self.assign_basic_role(interaction)
 
         admin_channel = interaction.client.get_channel(COMMITTEE_CHANNEL_ID)
-
-        await admin_channel.send(
-            f"🔔 **Verification Needed:**\n"
-            f"User: {interaction.user.mention} ({interaction.user.display_name})\n"
-            # f"Hey <@&{1098261430647660624}>, please verify this member against the CI Active Members list!‍"
-        )
+        if admin_channel:
+            await admin_channel.send(
+                f"🔔 **Verification Needed:**\n"
+                f"User: {interaction.user.mention} ({interaction.user.display_name})\n"
+                f"Hey <@&{COMMITTE_ROLE_ID}>, please verify this member against the CI Active Members list!‍"
+            )
 
         await interaction.followup.send(
             "Got it! I've pinged the committee. We'll verify your membership and get you sorted shortly. 🤘",
