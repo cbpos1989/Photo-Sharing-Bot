@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 ALBUM_URL = os.getenv('ALBUM_URL')
+WELCOME_CHANNEL_ID = os.getenv('WELCOME_CHANNEL_ID')
+COMMITTEE_CHANNEL_ID = os.getenv('COMMITTEE_CHANNEL_ID')
 
 if not TOKEN:
     raise ValueError("ERROR: DISCORD_TOKEN is missing from environment variables!")
@@ -41,7 +43,7 @@ async def photos(interaction: discord.Interaction):
     embed.add_field(name="How to contribute", value=f"Click [HERE]({ALBUM_URL}) to view or upload.")
     embed.set_footer(text="Club culture is built on shared shredding!")
 
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+    await interaction.response.send_message(embed=embed, ephemeral=False)
 
 @client.tree.command(name="spin-template", description="Generate a template for posting a new club spin")
 async def spin_template(interaction: discord.Interaction):
@@ -63,41 +65,56 @@ async def spin_template(interaction: discord.Interaction):
 
     await interaction.response.send_message(template, ephemeral=True)
 
-# @client.tree.command(name="test-onboarding", description="Test the onboarding message and buttons")
-# async def test_onboarding(interaction: discord.Interaction):
-#     # This simulates the message that would be sent to a new joiner
-#     embed = discord.Embed(
-#         title=f"Welcome to MAD MTB! 🚵‍♂️",
-#         description=(
-#             "We're stoked to have you. To get you to the right trails, "
-#             "please select your status below:"
-#         ),
-#         color=0x78be20 # MAD Green
-#     )
-#
-#     # We send it ephemerally so only you see the test, or normally if you want to show other admins
-#     await interaction.followup.send(
-#         content=f"Hey {interaction.user.mention}, this is a test of the onboarding system!",
-#         embed=embed,
-#         view=OnboardingView(),
-#         ephemeral=True
-#     )
+def is_welcome_channel(interaction: discord.Interaction) -> bool:
+    return interaction.channel_id == WELCOME_CHANNEL_ID
+
+@client.tree.command(name="verify", description="Start your MAD MTB onboarding")
+@app_commands.check(is_welcome_channel)
+async def verify(interaction: discord.Interaction):
+    # This simulates the message that would be sent to a new joiner
+    embed = discord.Embed(
+        title=f"Welcome to MAD MTB!, {interaction.user.display_name}! 🚵‍♂️",
+        description=(
+            "To get you out on the trails with the right access, please select your status:\n\n"
+            "**Paid Member:** You've paid your club fees and need full access.\n"
+            "**Guest / New Rider:** You're here for social spins or just checking us out."
+        ),
+        color=0x78be20 # MAD Green
+    )
+    embed.set_footer(text="If you're stuck, just ask a member of the Committee! 🤘")
+
+    await interaction.response.send_message(
+        embed=embed,
+        view=OnboardingView(),
+        ephemeral=True
+    )
+@client.tree.error
+async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    if isinstance(error, app_commands.CheckFailure):
+        await interaction.response.send_message(
+            "❌ This command only works in the #welcome channel!",
+            ephemeral=True
+        )
 
 # @client.event
 # async def on_member_join(member):
-#     welcome_channel = client.get_channel(1018922510533791867)
+#     welcome_channel = client.get_channel(WELCOME_CHANNEL_ID)
 #
-#     embed = discord.Embed(
-#         title=f"Welcome to MAD MTB, {member.display_name}! 🌲",
-#         description=(
-#             "We're glad to have you here. To get you to the right trails, "
-#             "please select your role below:"
-#         ),
-#         color=0x78be20
-#     )
+#     if welcome_channel:
+#         embed = discord.Embed(
+#             title=f"A new rider has joined! 🚵‍♂️💨",
+#             description=(
+#                 f"Welcome to the crew, {member.mention}!\n\n"
+#                 "To unlock the club channels and verify your membership, "
+#                 "please type the command below in this channel:\n"
+#                 "### ` /verify `"
+#             ),
+#             color=0x78be20 # MAD Green
+#         )
+#         embed.set_thumbnail(url=member.display_avatar.url)
 #
-#     # This attaches the buttons we created above to the welcome message
-#     await welcome_channel.send(content=f"Hey {member.mention}!", embed=embed, view=OnboardingView())
+#         # We DON'T send the view here. Just the prompt.
+#         await welcome_channel.send(content=f"Welcome {member.mention}!", embed=embed)
 
 class OnboardingView(discord.ui.View):
     def __init__(self):
@@ -123,7 +140,7 @@ class OnboardingView(discord.ui.View):
 
         await self.assign_basic_role(interaction)
 
-        admin_channel = interaction.client.get_channel(1467562740238389471)
+        admin_channel = interaction.client.get_channel(COMMITTEE_CHANNEL_ID)
 
         await admin_channel.send(
             f"🔔 **Verification Needed:**\n"
