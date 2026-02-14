@@ -2,6 +2,9 @@ import os
 import discord
 from discord import app_commands
 from dotenv import load_dotenv
+import re
+import requests
+import datetime
 
 # Load variables from .env file
 load_dotenv()
@@ -11,6 +14,8 @@ WELCOME_CHANNEL_ID = int(os.getenv('WELCOME_CHANNEL_ID'))
 COMMITTEE_CHANNEL_ID = int(os.getenv('COMMITTEE_CHANNEL_ID'))
 COMMITTE_ROLE_ID = int(os.getenv('COMMITTE_ROLE_ID'))
 MEMBER_ROLE_ID = os.getenv('MEMBER_ROLE_ID')
+OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
+SPINS_CHANNEL_NAME = os.getenv("SPINS_CHANNEL_NAME")
 
 if not TOKEN:
     raise ValueError("ERROR: DISCORD_TOKEN is missing from environment variables!")
@@ -114,6 +119,69 @@ async def verify(interaction: discord.Interaction):
         ephemeral=True
     )
 
+def get_weather_forecast(location: str):
+    """Fetches a 3-hour forecast for a given location using OpenWeatherMap API."""
+    if not OPENWEATHER_API_KEY:
+        print("Warning: OPENWEATHER_API_KEY not configured.")
+        return "Looks like I left my weather-watching glasses at home! (The OpenWeather API key isn't set up)."
+
+    # Geocoding: Convert location name to coordinates
+    geo_url = f"http://api.openweathermap.org/geo/1.0/direct?q={location}&limit=1&appid={OPENWEATHER_API_KEY}"
+    try:
+        geo_res = requests.get(geo_url)
+        geo_res.raise_for_status()
+        geo_data = geo_res.json()
+        if not geo_data:
+            return f"🤔 Couldn't find a place called '{location}'. Is that on this planet?"
+
+        lat = geo_data[0]['lat']
+        lon = geo_data[0]['lon']
+        found_location = geo_data[0]['name']
+
+        # Weather Forecast: Get forecast using coordinates
+        weather_url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric"
+        weather_res = requests.get(weather_url)
+        weather_res.raise_for_status()
+        forecast_data = weather_res.json()
+
+        # Let's use the first forecast interval (usually +3 hours from now)
+        first_forecast = forecast_data['list'][0]
+        weather = first_forecast['weather'][0]
+        main = first_forecast['main']
+        wind = first_forecast['wind']
+        
+        # Get a weather emoji
+        icon = weather['icon']
+        if '01' in icon: emoji = '☀️' # clear
+        elif '02' in icon: emoji = '🌤️' # few clouds
+        elif '03' in icon: emoji = '☁️' # scattered clouds
+        elif '04' in icon: emoji = '🌥️' # broken clouds
+        elif '09' in icon: emoji = '🌧️' # shower rain
+        elif '10' in icon: emoji = '🌦️' # rain
+        elif '11' in icon: emoji = '⛈️' # thunderstorm
+        elif '13' in icon: emoji = '❄️' # snow
+        elif '50' in icon: emoji = '🌫️' # mist
+        else: emoji = '🚵'
+
+        # Format the output message
+        forecast_time = datetime.datetime.fromtimestamp(first_forecast['dt']).strftime('%I:%M %p')
+        message = (
+            f"**Weather forecast for {found_location} (around {forecast_time})** {emoji}\n"
+            f"> **Condition:** {weather['description'].title()}\n"
+            f"> **Temp:** {main['temp']:.1f}°C (Feels like: {main['feels_like']:.1f}°C)\n"
+            f"> **Wind:** {wind['speed'] * 3.6:.1f} km/h\n"
+            f"_{Disclaimer: This is an automated forecast. Always check a reliable source before heading out!_}"
+        )
+        return message
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching weather data: {e}")
+        return "🔧 The weather machine seems to be broken. Couldn't fetch the forecast."
+    except (KeyError, IndexError):
+        return "🤯 My weather sensors are all jumbled. Couldn't parse the forecast data."
+
+# --- Discord Event Handlers ---
+
 @client.event
 async def on_member_join(member):
     welcome_channel = client.get_channel(WELCOME_CHANNEL_ID)
@@ -133,6 +201,32 @@ async def on_member_join(member):
 
         # We DON'T send the view here. Just the prompt.
         await welcome_channel.send(content=f"Welcome {member.mention}!", embed=embed)
+
+@client.event
+async def on_thread_create(thread: discord.Thread):
+    """
+    When a new thread is created in the SPINS_CHANNEL_NAME,
+    get the weather for the specified location.
+    """
+    if thread.parent.name.lower() == SPINS_CHANNEL_NAME.lower():
+        # Fetch the first message in the thread (the one that created it)
+        start_message = await thread.fetch_message(thread.id)
+        content = start_message.content
+
+        # Use regex to find the location from the "Meeting Point"
+        # This looks for "Meeting Point:" and captures everything until the end of the line
+        match = re.search(r"Meeting Point:\s*(.*)", content, re.IGNORECASE)
+
+        if match:
+            location = match.group(1).strip()
+            if location:
+                # Let the user know the bot is working on it
+                thinking_message = await thread.send(f"🤔 Checking the weather for **{location}**...")
+                forecast = get_weather_forecast(location)
+                await thinking_message.edit(content=forecast)
+            else:
+                await thread.send("Looks like the 'Meeting Point' is empty. I need a location to fetch the weather!")
+
 
 class OnboardingView(discord.ui.View):
     def __init__(self):
