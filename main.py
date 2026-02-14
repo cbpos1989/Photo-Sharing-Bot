@@ -10,11 +10,18 @@ ALBUM_URL = os.getenv('ALBUM_URL')
 WELCOME_CHANNEL_ID = int(os.getenv('WELCOME_CHANNEL_ID'))
 COMMITTEE_CHANNEL_ID = int(os.getenv('COMMITTEE_CHANNEL_ID'))
 COMMITTE_ROLE_ID = int(os.getenv('COMMITTE_ROLE_ID'))
+MEMBER_ROLE_ID = os.getenv('MEMBER_ROLE_ID')
 
 if not TOKEN:
     raise ValueError("ERROR: DISCORD_TOKEN is missing from environment variables!")
 if not ALBUM_URL:
     print("WARNING: ALBUM_URL is missing. /photos command might fail.")
+if not MEMBER_ROLE_ID:
+    print("WARNING: MEMBER_ROLE_ID is missing from environment variables! The /photos command will not be restricted to members.")
+    MEMBER_ROLE_ID = 0  # Set to 0 to indicate no restriction
+else:
+    MEMBER_ROLE_ID = int(MEMBER_ROLE_ID)
+
 
 class MadBot(discord.Client):
     def __init__(self):
@@ -33,7 +40,23 @@ class MadBot(discord.Client):
 
 client = MadBot()
 
+def is_member():
+    def predicate(interaction: discord.Interaction) -> bool:
+        if MEMBER_ROLE_ID == 0:
+            return True  # No role restriction if ID is not set
+
+        member_role = discord.utils.get(interaction.guild.roles, id=MEMBER_ROLE_ID)
+        
+        if member_role is None:
+            # This is a server-side check, so we just log it.
+            print(f"Warning: Role with ID {MEMBER_ROLE_ID} not found in guild {interaction.guild.name}.")
+            return False
+
+        return member_role in interaction.user.roles
+    return app_commands.check(predicate)
+
 @client.tree.command(name="photos", description="Get the link to the MAD MTB Google Photos album")
+@is_member()
 async def photos(interaction: discord.Interaction):
     await interaction.response.defer(ephemeral=False)
 
@@ -165,12 +188,20 @@ class OnboardingView(discord.ui.View):
 
 @client.tree.error
 async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-    # Case 1: The user tried /verify in the wrong channel
     if isinstance(error, app_commands.CheckFailure):
-        await interaction.response.send_message(
+        if interaction.command.name == 'photos':
+            await interaction.response.send_message(
+                "Sorry, this command is for members only. Please verify your membership to get access. 🤘",
+                ephemeral=True
+            )
+        elif interaction.command.name == 'verify':
+             await interaction.response.send_message(
             "❌ **Not here, rider!** The `/verify` command only works in the #welcome channel. Head over there to get your access! 🚵‍♂️",
             ephemeral=True
-        )
+            )
+        else:
+            # Generic message for any other CheckFailure
+            await interaction.response.send_message("You don't have the required permissions for this command.", ephemeral=True)
 
     # Case 2: The command is on cooldown (prevents spamming)
     elif isinstance(error, app_commands.CommandOnCooldown):
