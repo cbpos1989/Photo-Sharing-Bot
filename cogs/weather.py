@@ -112,7 +112,7 @@ class WeatherCog(commands.Cog):
 
     # The on_thread_create event becomes a Cog listener
     @commands.Cog.listener()
-    async def on_thread_create(thread: discord.Thread):
+    async def on_thread_create(self, thread: discord.Thread):
         """
         When a new thread is created in the SPINS_CHANNEL_NAME,
         get the weather for the specified location.
@@ -140,14 +140,14 @@ class WeatherCog(commands.Cog):
                 
                 print(f"[LOG] Fetching weather for {venue_name}...")
                 async with aiohttp.ClientSession() as session:
-                    forecast = await get_weather_forecast(session, location=venue_name, lat=lat, lon=lon, spin_time=spin_time)
+                    forecast = await self.get_weather_forecast(session, location=venue_name, lat=lat, lon=lon, spin_time=spin_time)
 
                 await thinking_message.edit(content=forecast)
                 print(f"[LOG] Weather check complete for '{thread.name}'.")
             else:
                 print("[LOG] No matching venue found in thread title.")
 
-    async def get_weather_forecast(session: aiohttp.ClientSession, location: str, lat: float, lon: float, spin_time: datetime) -> str:
+    async def get_weather_forecast(self, session: aiohttp.ClientSession, location: str, lat: float, lon: float, spin_time: datetime) -> str:
         """Fetches a 3-hour forecast for a given location using OpenWeatherMap API."""
         if not OPENWEATHER_API_KEY:
             print("Warning: OPENWEATHER_API_KEY not configured.")
