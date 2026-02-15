@@ -192,7 +192,7 @@ async def get_weather_forecast(session: aiohttp.ClientSession, location=None, la
                 f"> **Condition:** {weather['description'].title()}\n"
                 f"> **Temp:** {main['temp']:.1f}°C (Feels like: {main['feels_like']:.1f}°C)\n"
                 f"> **Wind:** {wind['speed'] * 3.6:.1f} km/h\n"
-                f"_{Disclaimer: This is an automated forecast. Always check a reliable source before heading out!_}"
+                f"Disclaimer: This is an automated forecast. Always check a reliable source before heading out!"
             )
             return message
 
