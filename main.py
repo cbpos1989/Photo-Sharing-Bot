@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 import aiohttp
 import asyncio
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 # Load variables from .env file
 load_dotenv()
@@ -20,11 +21,19 @@ SPINS_CHANNEL_NAME = os.getenv("SPINS_CHANNEL_NAME")
 
 VENUES = {
     "ticknock": {"lat": 53.24, "lon": -6.23},
-    "djouce": {"lat": 53.12, "lon": -6.22},
-    "carrick": {"lat": 53.15, "lon": -6.27},
-    "ballinastoe": {"lat": 53.10, "lon": -6.28},
-    "ballyhoura": {"lat": 52.33, "lon": -8.53},
-    "lead mines": {"lat": 53.23, "lon": -6.16}, # For "the lead mines" etc.
+    "djouce": {"lat": 53.15, "lon": -6.19},
+    "carrick": {"lat": 52.97, "lon": -6.17},
+    "ballinastoe": {"lat": 53.11, "lon": -6.24},
+    "gap": {"lat": 53.23, "lon": -6.23},
+    "lead mines": {"lat": 53.22, "lon": -6.16},
+    "knockree": {"lat": 53.18, "lon": -6.23},
+    "tona": {"lat": 53.16, "lon": -6.43},
+    "hush": {"lat": 52.86, "lon": -6.13},
+    "slade": {"lat": 53.25, "lon": -6.48},
+    "crone": {"lat": 53.16, "lon": -6.23},
+    "laragh": {"lat": 53.02, "lon": -6.34},
+    "moneystown": {"lat": 53.00, "lon": -6.22},
+    "trooperstown": {"lat": 53.00, "lon": -6.22},
 }
 
 if not TOKEN:
@@ -266,7 +275,7 @@ async def get_weather_forecast(session: aiohttp.ClientSession, location: str, la
             spin_timestamp = spin_time.timestamp()
             closest_forecast = min(forecast_data['list'], key=lambda x: abs(x['dt'] - spin_timestamp))
                 
-            forecast_time = datetime.fromtimestamp(closest_forecast['dt'])
+            utc_forecast_time = datetime.fromtimestamp(closest_forecast['dt'], tz=timezone.utc)
             weather_desc = closest_forecast['weather'][0]['description'].title()
             temp = closest_forecast['main']['temp']
             feels_like = closest_forecast['main']['feels_like']
@@ -274,7 +283,8 @@ async def get_weather_forecast(session: aiohttp.ClientSession, location: str, la
             wind_speed_kmh = wind_speed_ms * 3.6  # Convert m/s to km/h
             rain_3h = closest_forecast.get('rain', {}).get('3h', 0)
 
-            forecast_time_str = forecast_time.strftime('%a %d, %H:%M')
+            irish_time = utc_forecast_time.astimezone(ZoneInfo("Europe/Dublin"))
+            forecast_time_str = irish_time.strftime('%a %d, %H:%M')
 
             # Get a weather emoji
             icon = closest_forecast['weather'][0]['icon']
