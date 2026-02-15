@@ -271,7 +271,6 @@ async def get_weather_forecast(session: aiohttp.ClientSession, location: str, la
             else: emoji = '🚵'
 
             # Format the output message
-            forecast_time = datetime.datetime.fromtimestamp(first_forecast['dt']).strftime('%I:%M %p')
             message = (
                 f"**Weather forecast for {display_name} (around {forecast_time_str})** {emoji}\n"
                 f"> **Forecast:** {weather_desc}\n"
