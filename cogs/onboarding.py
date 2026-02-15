@@ -3,7 +3,14 @@ from discord import app_commands
 from discord.ext import commands
 
 # Import config from the root directory
-from config import WELCOME_CHANNEL_ID, COMMITTEE_CHANNEL_ID, COMMITTE_ROLE_ID
+from config import (
+    WELCOME_CHANNEL_ID,
+    COMMITTEE_CHANNEL_ID,
+    COMMITTE_ROLE_ID,
+    MEMBER_ROLE_ID,
+    PUBLIC_EVENTS_CHANNEL_ID,
+    PUBLIC_GENERAL_CHANNEL_ID
+)
 
 def is_welcome_channel(interaction: discord.Interaction) -> bool:
     return interaction.channel_id == WELCOME_CHANNEL_ID
@@ -59,7 +66,10 @@ class OnboardingView(discord.ui.View):
         await self.assign_basic_role(interaction)
 
         await interaction.followup.send(
-            f"Welcome to MAD! 🚵‍♂️ Feel free to browse <#{1173658006559408219}> channel in the Public Section or check out <#{1018922510533791868}> and join us for a ride soon!",
+            (
+                f"Welcome to MAD! 🚵‍♂️ Feel free to browse the <#{PUBLIC_EVENTS_CHANNEL_ID}> channel "
+                f"in the Public Section or check out <#{PUBLIC_GENERAL_CHANNEL_ID}> and join us for a ride soon!"
+            ),
             ephemeral=True
         )
 
