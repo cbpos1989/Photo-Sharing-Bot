@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import re
 import requests
 import datetime
+import asyncio
 
 # Load variables from .env file
 load_dotenv()
@@ -16,6 +17,15 @@ COMMITTE_ROLE_ID = int(os.getenv('COMMITTE_ROLE_ID'))
 MEMBER_ROLE_ID = os.getenv('MEMBER_ROLE_ID')
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 SPINS_CHANNEL_NAME = os.getenv("SPINS_CHANNEL_NAME")
+
+VENUES = {
+    "ticknock": {"lat": 53.24, "lon": -6.25},
+    "djouce": {"lat": 53.12, "lon": -6.22},
+    "carrick": {"lat": 53.15, "lon": -6.27},
+    "ballinastoe": {"lat": 53.10, "lon": -6.28},
+    "ballyhoura": {"lat": 52.33, "lon": -8.53},
+    "leadmines": {"lat": 53.23, "lon": -6.16}, # For "the lead mines" etc.
+}
 
 if not TOKEN:
     raise ValueError("ERROR: DISCORD_TOKEN is missing from environment variables!")
@@ -60,85 +70,97 @@ def is_member():
         return member_role in interaction.user.roles
     return app_commands.check(predicate)
 
-@client.tree.command(name="photos", description="Get the link to the MAD MTB Google Photos album")
-@is_member()
-async def photos(interaction: discord.Interaction):
-    await interaction.response.defer(ephemeral=False)
+# @client.tree.command(name="photos", description="Get the link to the MAD MTB Google Photos album")
+# @is_member()
+# async def photos(interaction: discord.Interaction):
+#     await interaction.response.defer(ephemeral=False)
 
-    embed = discord.Embed(
-        title="📸 MAD MTB Photo Vault",
-        description="Don't let those trail gems sit on your phone! Upload your photos and videos to our shared album.",
-        color=0x78be20  # MAD Green
-    )
-    embed.add_field(name="How to contribute", value=f"Click [HERE]({ALBUM_URL}) to view or upload.")
-    embed.set_footer(text="Club culture is built on shared shredding!")
+#     embed = discord.Embed(
+#         title="📸 MAD MTB Photo Vault",
+#         description="Don't let those trail gems sit on your phone! Upload your photos and videos to our shared album.",
+#         color=0x78be20  # MAD Green
+#     )
+#     embed.add_field(name="How to contribute", value=f"Click [HERE]({ALBUM_URL}) to view or upload.")
+#     embed.set_footer(text="Club culture is built on shared shredding!")
 
-    await interaction.followup.send(embed=embed)
+#     await interaction.followup.send(embed=embed)
 
-@client.tree.command(name="spin-template", description="Generate a template for posting a new club spin")
-async def spin_template(interaction: discord.Interaction):
-    # This template is pulled directly from your MAD Committee guidelines
-    template = (
-        "**MAD MTB Spin Details**\n"
-        "```\n"
-        "**Date & Time:** \n"
-        "**Meeting Point:** \n"
-        "**Route Distance (km):** \n"
-        "**Elevation:** (e.g., Steep, Medium, Flat etc.) \n"
-        "**Technicality:** (e.g., Beginner/Intermediate/Difficult)\n"
-        "**Pace:** (e.g., Social/Leisurely/Fast-paced)\n"
-        "**Duration:** (Approx hours including breaks)\n"
-        "**Required Equipment:** (e.g., Lights for night rides, extra water)\n"
-        "```\n"
-        "*Tip: Copy the text above and paste it into your new thread in the #spins channel!*"
-    )
+# @client.tree.command(name="spin-template", description="Generate a template for posting a new club spin")
+# async def spin_template(interaction: discord.Interaction):
+#     # This template is pulled directly from your MAD Committee guidelines
+#     template = (
+#         "**MAD MTB Spin Details**\n"
+#         "```\n"
+#         "**Date & Time:** \n"
+#         "**Meeting Point:** \n"
+#         "**Route Distance (km):** \n"
+#         "**Elevation:** (e.g., Steep, Medium, Flat etc.) \n"
+#         "**Technicality:** (e.g., Beginner/Intermediate/Difficult)\n"
+#         "**Pace:** (e.g., Social/Leisurely/Fast-paced)\n"
+#         "**Duration:** (Approx hours including breaks)\n"
+#         "**Required Equipment:** (e.g., Lights for night rides, extra water)\n"
+#         "```\n"
+#         "*Tip: Copy the text above and paste it into your new thread in the #spins channel!*"
+#     )
 
-    await interaction.response.send_message(template, ephemeral=True)
+#     await interaction.response.send_message(template, ephemeral=True)
 
-def is_welcome_channel(interaction: discord.Interaction) -> bool:
-    return interaction.channel_id == WELCOME_CHANNEL_ID
+# def is_welcome_channel(interaction: discord.Interaction) -> bool:
+#     return interaction.channel_id == WELCOME_CHANNEL_ID
 
-@client.tree.command(name="verify", description="Start your MAD MTB onboarding")
-@app_commands.check(is_welcome_channel)
-async def verify(interaction: discord.Interaction):
-    # This simulates the message that would be sent to a new joiner
-    embed = discord.Embed(
-        title=f"Welcome to MAD MTB!, {interaction.user.display_name}! 🚵‍♂️",
-        description=(
-            "To get you out on the trails with the right access, please select your status:\n\n"
-            "**Paid Member:** You've paid your club fees and need full access.\n"
-            "**Guest / New Rider:** You're here for social spins or just checking us out."
-        ),
-        color=0x78be20 # MAD Green
-    )
-    embed.set_footer(text="If you're stuck, just ask a member of the Committee! 🤘")
+# @client.tree.command(name="verify", description="Start your MAD MTB onboarding")
+# @app_commands.check(is_welcome_channel)
+# async def verify(interaction: discord.Interaction):
+#     # This simulates the message that would be sent to a new joiner
+#     embed = discord.Embed(
+#         title=f"Welcome to MAD MTB!, {interaction.user.display_name}! 🚵‍♂️",
+#         description=(
+#             "To get you out on the trails with the right access, please select your status:\n\n"
+#             "**Paid Member:** You've paid your club fees and need full access.\n"
+#             "**Guest / New Rider:** You're here for social spins or just checking us out."
+#         ),
+#         color=0x78be20 # MAD Green
+#     )
+#     embed.set_footer(text="If you're stuck, just ask a member of the Committee! 🤘")
 
-    await interaction.response.send_message(
-        embed=embed,
-        view=OnboardingView(),
-        ephemeral=True
-    )
+#     await interaction.response.send_message(
+#         embed=embed,
+#         view=OnboardingView(),
+#         ephemeral=True
+#     )
 
-def get_weather_forecast(location: str):
+def get_weather_forecast(location=None, lat=None, lon=None):
     """Fetches a 3-hour forecast for a given location using OpenWeatherMap API."""
     if not OPENWEATHER_API_KEY:
         print("Warning: OPENWEATHER_API_KEY not configured.")
-        return "Looks like I left my weather-watching glasses at home! (The OpenWeather API key isn't set up)."
+        return "⚠️ OpenWeather API key is not configured. Cannot fetch weather."
 
-    # Geocoding: Convert location name to coordinates
-    geo_url = f"http://api.openweathermap.org/geo/1.0/direct?q={location}&limit=1&appid={OPENWEATHER_API_KEY}"
+    display_name = location.title() if location else "the specified location"
+
+    # --- Step 1: Get coordinates if not provided ---
+    if lat is None or lon is None:
+        if not location:
+            return "❌ No location or coordinates provided."
+
+        GEO_URL = f"http://api.openweathermap.org/geo/1.0/direct?q={location}&limit=1&appid={OPENWEATHER_API_KEY}"
+        try:
+            geo_response = requests.get(GEO_URL)
+            geo_response.raise_for_status()
+            geo_data = geo_response.json()
+            if not geo_data:
+                return f"❌ Could not find location: **{location}**. Please check the spelling or be more specific."
+
+            lat = geo_data[0]['lat']
+            lon = geo_data[0]['lon']
+            country = geo_data[0]['country']
+            state = geo_data[0].get('state', '')
+            display_name = f"{location.title()}, {state}" if state else f"{location.title()}, {country}"
+
+        except requests.exceptions.RequestException as e:
+            return f"🔥 Error connecting to Geocoding API: {e}"
+
+    # --- Step 2: Get weather forecast using coordinates ---
     try:
-        geo_res = requests.get(geo_url)
-        geo_res.raise_for_status()
-        geo_data = geo_res.json()
-        if not geo_data:
-            return f"🤔 Couldn't find a place called '{location}'. Is that on this planet?"
-
-        lat = geo_data[0]['lat']
-        lon = geo_data[0]['lon']
-        found_location = geo_data[0]['name']
-
-        # Weather Forecast: Get forecast using coordinates
         weather_url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric"
         weather_res = requests.get(weather_url)
         weather_res.raise_for_status()
@@ -166,7 +188,7 @@ def get_weather_forecast(location: str):
         # Format the output message
         forecast_time = datetime.datetime.fromtimestamp(first_forecast['dt']).strftime('%I:%M %p')
         message = (
-            f"**Weather forecast for {found_location} (around {forecast_time})** {emoji}\n"
+            f"**Weather forecast for {display_name} (around {forecast_time})** {emoji}\n"
             f"> **Condition:** {weather['description'].title()}\n"
             f"> **Temp:** {main['temp']:.1f}°C (Feels like: {main['feels_like']:.1f}°C)\n"
             f"> **Wind:** {wind['speed'] * 3.6:.1f} km/h\n"
@@ -182,25 +204,25 @@ def get_weather_forecast(location: str):
 
 # --- Discord Event Handlers ---
 
-@client.event
-async def on_member_join(member):
-    welcome_channel = client.get_channel(WELCOME_CHANNEL_ID)
+# @client.event
+# async def on_member_join(member):
+#     welcome_channel = client.get_channel(WELCOME_CHANNEL_ID)
 
-    if welcome_channel:
-        embed = discord.Embed(
-            title=f"A new rider has joined! 🚵‍♂️💨",
-            description=(
-                f"Welcome to the crew, {member.mention}!\n\n"
-                "To unlock the club channels and verify your membership, "
-                "please type the command below in this channel:\n"
-                "### ` /verify `"
-            ),
-            color=0x78be20 # MAD Green
-        )
-        embed.set_thumbnail(url=member.display_avatar.url)
+#     if welcome_channel:
+#         embed = discord.Embed(
+#             title=f"A new rider has joined! 🚵‍♂️💨",
+#             description=(
+#                 f"Welcome to the crew, {member.mention}!\n\n"
+#                 "To unlock the club channels and verify your membership, "
+#                 "please type the command below in this channel:\n"
+#                 "### ` /verify `"
+#             ),
+#             color=0x78be20 # MAD Green
+#         )
+#         embed.set_thumbnail(url=member.display_avatar.url)
 
-        # We DON'T send the view here. Just the prompt.
-        await welcome_channel.send(content=f"Welcome {member.mention}!", embed=embed)
+#         # We DON'T send the view here. Just the prompt.
+#         await welcome_channel.send(content=f"Welcome {member.mention}!", embed=embed)
 
 @client.event
 async def on_thread_create(thread: discord.Thread):
@@ -209,23 +231,27 @@ async def on_thread_create(thread: discord.Thread):
     get the weather for the specified location.
     """
     if thread.parent.name.lower() == SPINS_CHANNEL_NAME.lower():
-        # Fetch the first message in the thread (the one that created it)
-        start_message = await thread.fetch_message(thread.id)
-        content = start_message.content
+        thread_title_lower = thread.name.lower()
+        found_venue_coords = None
+        venue_name = None
 
-        # Use regex to find the location from the "Meeting Point"
-        # This looks for "Meeting Point:" and captures everything until the end of the line
-        match = re.search(r"Meeting Point:\s*(.*)", content, re.IGNORECASE)
+        for name, coords in VENUES.items():
+            if name in thread_title_lower:
+                found_venue_coords = coords
+                venue_name = name.title()
+                break  # Stop after finding the first match
 
-        if match:
-            location = match.group(1).strip()
-            if location:
-                # Let the user know the bot is working on it
-                thinking_message = await thread.send(f"🤔 Checking the weather for **{location}**...")
-                forecast = get_weather_forecast(location)
-                await thinking_message.edit(content=forecast)
-            else:
-                await thread.send("Looks like the 'Meeting Point' is empty. I need a location to fetch the weather!")
+        if found_venue_coords:
+            lat = found_venue_coords["lat"]
+            lon = found_venue_coords["lon"]
+
+            thinking_message = await thread.send(f"🤔 Checking the weather for **{venue_name}**...")
+
+            # Run the blocking request in a separate thread to not block the bot
+            # This is better for performance.
+            forecast = await asyncio.to_thread(get_weather_forecast, location=venue_name, lat=lat, lon=lon)
+
+            await thinking_message.edit(content=forecast)
 
 
 class OnboardingView(discord.ui.View):
