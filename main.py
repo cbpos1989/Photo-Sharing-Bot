@@ -19,7 +19,7 @@ OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 SPINS_CHANNEL_NAME = os.getenv("SPINS_CHANNEL_NAME")
 
 VENUES = {
-    "ticknock": {"lat": 53.24, "lon": -6.25},
+    "ticknock": {"lat": 53.24, "lon": -6.23},
     "djouce": {"lat": 53.12, "lon": -6.22},
     "carrick": {"lat": 53.15, "lon": -6.27},
     "ballinastoe": {"lat": 53.10, "lon": -6.28},
@@ -157,50 +157,69 @@ def parse_spin_time_from_title(title: str) -> datetime:
             print(f"[LOG] No specific time found, defaulting to {spin_hour}:00.")
             
     # --- Date Parsing ---
-    day = None
-    month = None
-    
+    spin_date = None
+
+    # Priority 1: Find a specific date like "15th Feb"
     months = {
         'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
         'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
     }
-    
-    # Try to find "DD Month" or "DDth Month"
     date_match = re.search(r'(\d{1,2})(?:st|nd|rd|th)?\s+(' + '|'.join(months.keys()) + ')', title_lower)
     if date_match:
         day = int(date_match.group(1))
         month = months[date_match.group(2)]
-        print(f"[LOG] Found day and month: Day {day}, Month {month}")
-    else:
-        # If no month, find just a day number and assume current month
+        year = now.year
+        if month < now.month or (month == now.month and day < now.day):
+            year += 1
+        try:
+            spin_date = datetime(year, month, day)
+            print(f"[LOG] Found specific date: {spin_date.strftime('%Y-%m-%d')}")
+        except ValueError:
+            spin_date = None
+
+    # Priority 2: If no date, find a weekday like "Tuesday"
+    if not spin_date:
+        weekdays = {
+            'monday': 0, 'mon': 0, 'tuesday': 1, 'tue': 1, 'wednesday': 2, 'wed': 2,
+            'thursday': 3, 'thu': 3, 'thurs': 3, 'friday': 4, 'fri': 4,
+            'saturday': 5, 'sat': 5, 'sunday': 6, 'sun': 6
+        }
+        weekday_match = re.search(r'\b(' + '|'.join(weekdays.keys()) + r')\b', title_lower)
+        if weekday_match:
+            target_weekday = weekdays[weekday_match.group(1)]
+            days_ahead = (target_weekday - now.weekday() + 7) % 7
+            if days_ahead == 0:  # If it's today, assume next week
+                days_ahead = 7
+            target_date = now.date() + timedelta(days=days_ahead)
+            spin_date = datetime(target_date.year, target_date.month, target_date.day)
+            print(f"[LOG] Found weekday, calculated next date: {spin_date.strftime('%Y-%m-%d')}")
+
+    # Priority 3: If still no date, find a number like "28th" and assume current/next month
+    if not spin_date:
         day_match = re.search(r'(\d{1,2})(?:st|nd|rd|th)?', title_lower)
         if day_match:
             day = int(day_match.group(1))
             month = now.month
-            print(f"[LOG] Found day only ({day}), assuming current month ({month}).")
+            year = now.year
+            if day < now.day:
+                month += 1
+                if month > 12:
+                    month = 1
+                    year += 1
+            try:
+                spin_date = datetime(year, month, day)
+                print(f"[LOG] Found day number only, calculated date: {spin_date.strftime('%Y-%m-%d')}")
+            except ValueError:
+                spin_date = None
 
-    if day is None:
-        # If no date at all is found, default to the upcoming Saturday
-        print("[LOG] No date info found. Defaulting to upcoming Saturday.")
+    # Priority 4: If all else fails, default to the upcoming Saturday
+    if not spin_date:
         days_ahead = (5 - now.weekday() + 7) % 7 # 5 = Saturday
-        if days_ahead == 0 and now.hour > 12: # If it's Saturday afternoon, assume next Saturday
+        if days_ahead == 0: # If it's Saturday, default to next Saturday
             days_ahead = 7
         target_date = now.date() + timedelta(days=days_ahead)
         spin_date = datetime(target_date.year, target_date.month, target_date.day)
-    else:
-        year = now.year
-        # Handle cases where the spin is next year (e.g., it's Dec, spin is in Jan)
-        if month < now.month or (month == now.month and day < now.day):
-            year += 1
-            print(f"[LOG] Parsed date is in the past, assuming next year ({year}).")
-        
-        try:
-            spin_date = datetime(year, month, day)
-        except ValueError:
-            print(f"[ERROR] Invalid date created (e.g., 31st Feb). Defaulting to upcoming Saturday.")
-            days_ahead = (5 - now.weekday() + 7) % 7
-            target_date = now.date() + timedelta(days=days_ahead)
-            spin_date = datetime(target_date.year, target_date.month, target_date.day)
+        print(f"[LOG] No date info found. Defaulting to upcoming Saturday: {spin_date.strftime('%Y-%m-%d')}")
 
     final_spin_time = spin_date.replace(hour=spin_hour, minute=spin_minute, second=0, microsecond=0)
     print(f"[LOG] Final parsed spin time: {final_spin_time.strftime('%Y-%m-%d %H:%M')}")
@@ -276,7 +295,7 @@ async def get_weather_forecast(session: aiohttp.ClientSession, location: str, la
                 f"> **Forecast:** {weather_desc}\n"
                 f"> **Temp:** {temp:.1f}°C (Feels like {feels_like:.1f}°C)\n"
                 f"> **Wind:** {wind_speed_kmh:.1f} km/h\n"
-                f"> **Rain (in last 3h):** {rain_3h} mm"
+                f"> **Rain (over 3h):** {rain_3h} mm\n"
                 f"Disclaimer: This is an automated forecast. Always check a reliable source before heading out!"
             )
             return message
