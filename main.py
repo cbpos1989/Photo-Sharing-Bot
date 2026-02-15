@@ -206,7 +206,7 @@ def parse_spin_time_from_title(title: str) -> datetime:
     print(f"[LOG] Final parsed spin time: {final_spin_time.strftime('%Y-%m-%d %H:%M')}")
     return final_spin_time
 
-async def get_weather_forecast(session: aiohttp.ClientSessionlocation, location: str, lat: float, lon: float, spin_time: datetime) -> str:
+async def get_weather_forecast(session: aiohttp.ClientSession, location: str, lat: float, lon: float, spin_time: datetime) -> str:
     """Fetches a 3-hour forecast for a given location using OpenWeatherMap API."""
     if not OPENWEATHER_API_KEY:
         print("Warning: OPENWEATHER_API_KEY not configured.")
