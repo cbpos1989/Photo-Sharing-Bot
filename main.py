@@ -2,8 +2,7 @@ import os
 import discord
 from discord import app_commands
 from dotenv import load_dotenv
-import re
-import requests
+import aiohttp
 import datetime
 import asyncio
 
@@ -144,7 +143,7 @@ def get_weather_forecast(location=None, lat=None, lon=None):
 
         GEO_URL = f"http://api.openweathermap.org/geo/1.0/direct?q={location}&limit=1&appid={OPENWEATHER_API_KEY}"
         try:
-            geo_response = requests.get(GEO_URL)
+            geo_response = aiohttp.get(GEO_URL)
             geo_response.raise_for_status()
             geo_data = geo_response.json()
             if not geo_data:
@@ -156,13 +155,13 @@ def get_weather_forecast(location=None, lat=None, lon=None):
             state = geo_data[0].get('state', '')
             display_name = f"{location.title()}, {state}" if state else f"{location.title()}, {country}"
 
-        except requests.exceptions.RequestException as e:
+        except aiohttp.exceptions.RequestException as e:
             return f"🔥 Error connecting to Geocoding API: {e}"
 
     # --- Step 2: Get weather forecast using coordinates ---
     try:
         weather_url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric"
-        weather_res = requests.get(weather_url)
+        weather_res = aiohttp.get(weather_url)
         weather_res.raise_for_status()
         forecast_data = weather_res.json()
 
@@ -196,7 +195,7 @@ def get_weather_forecast(location=None, lat=None, lon=None):
         )
         return message
 
-    except requests.exceptions.RequestException as e:
+    except aiohttp.exceptions.RequestException as e:
         print(f"Error fetching weather data: {e}")
         return "🔧 The weather machine seems to be broken. Couldn't fetch the forecast."
     except (KeyError, IndexError):
