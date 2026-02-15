@@ -79,64 +79,64 @@ def is_member():
         return member_role in interaction.user.roles
     return app_commands.check(predicate)
 
-# @client.tree.command(name="photos", description="Get the link to the MAD MTB Google Photos album")
-# @is_member()
-# async def photos(interaction: discord.Interaction):
-#     await interaction.response.defer(ephemeral=False)
+@client.tree.command(name="photos", description="Get the link to the MAD MTB Google Photos album")
+@is_member()
+async def photos(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=False)
 
-#     embed = discord.Embed(
-#         title="📸 MAD MTB Photo Vault",
-#         description="Don't let those trail gems sit on your phone! Upload your photos and videos to our shared album.",
-#         color=0x78be20  # MAD Green
-#     )
-#     embed.add_field(name="How to contribute", value=f"Click [HERE]({ALBUM_URL}) to view or upload.")
-#     embed.set_footer(text="Club culture is built on shared shredding!")
+    embed = discord.Embed(
+        title="📸 MAD MTB Photo Vault",
+        description="Don't let those trail gems sit on your phone! Upload your photos and videos to our shared album.",
+        color=0x78be20  # MAD Green
+    )
+    embed.add_field(name="How to contribute", value=f"Click [HERE]({ALBUM_URL}) to view or upload.")
+    embed.set_footer(text="Club culture is built on shared shredding!")
 
-#     await interaction.followup.send(embed=embed)
+    await interaction.followup.send(embed=embed)
 
-# @client.tree.command(name="spin-template", description="Generate a template for posting a new club spin")
-# async def spin_template(interaction: discord.Interaction):
-#     # This template is pulled directly from your MAD Committee guidelines
-#     template = (
-#         "**MAD MTB Spin Details**\n"
-#         "```\n"
-#         "**Date & Time:** \n"
-#         "**Meeting Point:** \n"
-#         "**Route Distance (km):** \n"
-#         "**Elevation:** (e.g., Steep, Medium, Flat etc.) \n"
-#         "**Technicality:** (e.g., Beginner/Intermediate/Difficult)\n"
-#         "**Pace:** (e.g., Social/Leisurely/Fast-paced)\n"
-#         "**Duration:** (Approx hours including breaks)\n"
-#         "**Required Equipment:** (e.g., Lights for night rides, extra water)\n"
-#         "```\n"
-#         "*Tip: Copy the text above and paste it into your new thread in the #spins channel!*"
-#     )
+@client.tree.command(name="spin-template", description="Generate a template for posting a new club spin")
+async def spin_template(interaction: discord.Interaction):
+    # This template is pulled directly from your MAD Committee guidelines
+    template = (
+        "**MAD MTB Spin Details**\n"
+        "```\n"
+        "**Date & Time:** \n"
+        "**Meeting Point:** \n"
+        "**Route Distance (km):** \n"
+        "**Elevation:** (e.g., Steep, Medium, Flat etc.) \n"
+        "**Technicality:** (e.g., Beginner/Intermediate/Difficult)\n"
+        "**Pace:** (e.g., Social/Leisurely/Fast-paced)\n"
+        "**Duration:** (Approx hours including breaks)\n"
+        "**Required Equipment:** (e.g., Lights for night rides, extra water)\n"
+        "```\n"
+        "*Tip: Copy the text above and paste it into your new thread in the #spins channel!*"
+    )
 
-#     await interaction.response.send_message(template, ephemeral=True)
+    await interaction.response.send_message(template, ephemeral=True)
 
-# def is_welcome_channel(interaction: discord.Interaction) -> bool:
-#     return interaction.channel_id == WELCOME_CHANNEL_ID
+def is_welcome_channel(interaction: discord.Interaction) -> bool:
+    return interaction.channel_id == WELCOME_CHANNEL_ID
 
-# @client.tree.command(name="verify", description="Start your MAD MTB onboarding")
-# @app_commands.check(is_welcome_channel)
-# async def verify(interaction: discord.Interaction):
-#     # This simulates the message that would be sent to a new joiner
-#     embed = discord.Embed(
-#         title=f"Welcome to MAD MTB!, {interaction.user.display_name}! 🚵‍♂️",
-#         description=(
-#             "To get you out on the trails with the right access, please select your status:\n\n"
-#             "**Paid Member:** You've paid your club fees and need full access.\n"
-#             "**Guest / New Rider:** You're here for social spins or just checking us out."
-#         ),
-#         color=0x78be20 # MAD Green
-#     )
-#     embed.set_footer(text="If you're stuck, just ask a member of the Committee! 🤘")
+@client.tree.command(name="verify", description="Start your MAD MTB onboarding")
+@app_commands.check(is_welcome_channel)
+async def verify(interaction: discord.Interaction):
+    # This simulates the message that would be sent to a new joiner
+    embed = discord.Embed(
+        title=f"Welcome to MAD MTB!, {interaction.user.display_name}! 🚵‍♂️",
+        description=(
+            "To get you out on the trails with the right access, please select your status:\n\n"
+            "**Paid Member:** You've paid your club fees and need full access.\n"
+            "**Guest / New Rider:** You're here for social spins or just checking us out."
+        ),
+        color=0x78be20 # MAD Green
+    )
+    embed.set_footer(text="If you're stuck, just ask a member of the Committee! 🤘")
 
-#     await interaction.response.send_message(
-#         embed=embed,
-#         view=OnboardingView(),
-#         ephemeral=True
-#     )
+    await interaction.response.send_message(
+        embed=embed,
+        view=OnboardingView(),
+        ephemeral=True
+    )
 
 def parse_spin_time_from_title(title: str) -> datetime:
     """
@@ -318,25 +318,25 @@ async def get_weather_forecast(session: aiohttp.ClientSession, location: str, la
 
 # --- Discord Event Handlers ---
 
-# @client.event
-# async def on_member_join(member):
-#     welcome_channel = client.get_channel(WELCOME_CHANNEL_ID)
+@client.event
+async def on_member_join(member):
+    welcome_channel = client.get_channel(WELCOME_CHANNEL_ID)
 
-#     if welcome_channel:
-#         embed = discord.Embed(
-#             title=f"A new rider has joined! 🚵‍♂️💨",
-#             description=(
-#                 f"Welcome to the crew, {member.mention}!\n\n"
-#                 "To unlock the club channels and verify your membership, "
-#                 "please type the command below in this channel:\n"
-#                 "### ` /verify `"
-#             ),
-#             color=0x78be20 # MAD Green
-#         )
-#         embed.set_thumbnail(url=member.display_avatar.url)
+    if welcome_channel:
+        embed = discord.Embed(
+            title=f"A new rider has joined! 🚵‍♂️💨",
+            description=(
+                f"Welcome to the crew, {member.mention}!\n\n"
+                "To unlock the club channels and verify your membership, "
+                "please type the command below in this channel:\n"
+                "### ` /verify `"
+            ),
+            color=0x78be20 # MAD Green
+        )
+        embed.set_thumbnail(url=member.display_avatar.url)
 
-#         # We DON'T send the view here. Just the prompt.
-#         await welcome_channel.send(content=f"Welcome {member.mention}!", embed=embed)
+        # We DON'T send the view here. Just the prompt.
+        await welcome_channel.send(content=f"Welcome {member.mention}!", embed=embed)
 
 @client.event
 async def on_thread_create(thread: discord.Thread):
