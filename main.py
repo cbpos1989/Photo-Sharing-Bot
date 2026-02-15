@@ -3,8 +3,9 @@ import discord
 from discord import app_commands
 from dotenv import load_dotenv
 import aiohttp
-import datetime
 import asyncio
+import re
+from datetime import datetime, timedelta
 
 # Load variables from .env file
 load_dotenv()
@@ -128,7 +129,84 @@ def is_member():
 #         ephemeral=True
 #     )
 
-async def get_weather_forecast(session: aiohttp.ClientSession, location=None, lat=None, lon=None):
+def parse_spin_time_from_title(title: str) -> datetime:
+    """
+    Parses a thread title to extract the date and time for a spin.
+    Makes assumptions for missing information.
+    """
+    print(f"[LOG] Parsing title for time: '{title}'")
+    now = datetime.now()
+    title_lower = title.lower()
+
+    # Defaults
+    spin_hour = 10
+    spin_minute = 0
+    
+    # --- Time Parsing ---
+    if 'evening' in title_lower:
+        spin_hour = 19
+        print(f"[LOG] 'evening' keyword found, defaulting to {spin_hour}:00.")
+    else:
+        # Catches the first time mentioned, e.g., "9:30 meet for 10:00 start" -> 9:30
+        time_match = re.search(r'(\d{1,2})[:.](\d{2})', title_lower)
+        if time_match:
+            spin_hour = int(time_match.group(1))
+            spin_minute = int(time_match.group(2))
+            print(f"[LOG] Found time in title: {spin_hour:02d}:{spin_minute:02d}")
+        else:
+            print(f"[LOG] No specific time found, defaulting to {spin_hour}:00.")
+            
+    # --- Date Parsing ---
+    day = None
+    month = None
+    
+    months = {
+        'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+        'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
+    }
+    
+    # Try to find "DD Month" or "DDth Month"
+    date_match = re.search(r'(\d{1,2})(?:st|nd|rd|th)?\s+(' + '|'.join(months.keys()) + ')', title_lower)
+    if date_match:
+        day = int(date_match.group(1))
+        month = months[date_match.group(2)]
+        print(f"[LOG] Found day and month: Day {day}, Month {month}")
+    else:
+        # If no month, find just a day number and assume current month
+        day_match = re.search(r'(\d{1,2})(?:st|nd|rd|th)?', title_lower)
+        if day_match:
+            day = int(day_match.group(1))
+            month = now.month
+            print(f"[LOG] Found day only ({day}), assuming current month ({month}).")
+
+    if day is None:
+        # If no date at all is found, default to the upcoming Saturday
+        print("[LOG] No date info found. Defaulting to upcoming Saturday.")
+        days_ahead = (5 - now.weekday() + 7) % 7 # 5 = Saturday
+        if days_ahead == 0 and now.hour > 12: # If it's Saturday afternoon, assume next Saturday
+            days_ahead = 7
+        target_date = now.date() + timedelta(days=days_ahead)
+        spin_date = datetime(target_date.year, target_date.month, target_date.day)
+    else:
+        year = now.year
+        # Handle cases where the spin is next year (e.g., it's Dec, spin is in Jan)
+        if month < now.month or (month == now.month and day < now.day):
+            year += 1
+            print(f"[LOG] Parsed date is in the past, assuming next year ({year}).")
+        
+        try:
+            spin_date = datetime(year, month, day)
+        except ValueError:
+            print(f"[ERROR] Invalid date created (e.g., 31st Feb). Defaulting to upcoming Saturday.")
+            days_ahead = (5 - now.weekday() + 7) % 7
+            target_date = now.date() + timedelta(days=days_ahead)
+            spin_date = datetime(target_date.year, target_date.month, target_date.day)
+
+    final_spin_time = spin_date.replace(hour=spin_hour, minute=spin_minute, second=0, microsecond=0)
+    print(f"[LOG] Final parsed spin time: {final_spin_time.strftime('%Y-%m-%d %H:%M')}")
+    return final_spin_time
+
+async def get_weather_forecast(session: aiohttp.ClientSessionlocation, location: str, lat: float, lon: float, spin_time: datetime) -> str:
     """Fetches a 3-hour forecast for a given location using OpenWeatherMap API."""
     if not OPENWEATHER_API_KEY:
         print("Warning: OPENWEATHER_API_KEY not configured.")
@@ -166,14 +244,21 @@ async def get_weather_forecast(session: aiohttp.ClientSession, location=None, la
             forecast_data = await response.json()
             print("[LOG] Successfully parsed weather data.")
 
-            # Let's use the first forecast interval (usually +3 hours from now)
-            first_forecast = forecast_data['list'][0]
-            weather = first_forecast['weather'][0]
-            main = first_forecast['main']
-            wind = first_forecast['wind']
-            
+            spin_timestamp = spin_time.timestamp()
+            closest_forecast = min(forecast_data['list'], key=lambda x: abs(x['dt'] - spin_timestamp))
+                
+            forecast_time = datetime.fromtimestamp(closest_forecast['dt'])
+            weather_desc = closest_forecast['weather'][0]['description'].title()
+            temp = closest_forecast['main']['temp']
+            feels_like = closest_forecast['main']['feels_like']
+            wind_speed_ms = closest_forecast['wind']['speed']
+            wind_speed_kmh = wind_speed_ms * 3.6  # Convert m/s to km/h
+            rain_3h = closest_forecast.get('rain', {}).get('3h', 0)
+
+            forecast_time_str = forecast_time.strftime('%a %d, %H:%M')
+
             # Get a weather emoji
-            icon = weather['icon']
+            icon = closest_forecast['weather'][0]['icon']
             if '01' in icon: emoji = '☀️' # clear
             elif '02' in icon: emoji = '🌤️' # few clouds
             elif '03' in icon: emoji = '☁️' # scattered clouds
@@ -188,10 +273,11 @@ async def get_weather_forecast(session: aiohttp.ClientSession, location=None, la
             # Format the output message
             forecast_time = datetime.datetime.fromtimestamp(first_forecast['dt']).strftime('%I:%M %p')
             message = (
-                f"**Weather forecast for {display_name} (around {forecast_time})** {emoji}\n"
-                f"> **Condition:** {weather['description'].title()}\n"
-                f"> **Temp:** {main['temp']:.1f}°C (Feels like: {main['feels_like']:.1f}°C)\n"
-                f"> **Wind:** {wind['speed'] * 3.6:.1f} km/h\n"
+                f"**Weather forecast for {display_name} (around {forecast_time_str})** {emoji}\n"
+                f"> **Forecast:** {weather_desc}\n"
+                f"> **Temp:** {temp:.1f}°C (Feels like {feels_like:.1f}°C)\n"
+                f"> **Wind:** {wind_speed_kmh:.1f} km/h\n"
+                f"> **Rain (in last 3h):** {rain_3h} mm"
                 f"Disclaimer: This is an automated forecast. Always check a reliable source before heading out!"
             )
             return message
@@ -244,6 +330,8 @@ async def on_thread_create(thread: discord.Thread):
                 break  # Stop after finding the first match
 
         if found_venue_coords:
+            spin_time = parse_spin_time_from_title(thread.name)
+
             lat = found_venue_coords["lat"]
             lon = found_venue_coords["lon"]
 
@@ -251,7 +339,7 @@ async def on_thread_create(thread: discord.Thread):
             
             print(f"[LOG] Fetching weather for {venue_name}...")
             async with aiohttp.ClientSession() as session:
-                forecast = await get_weather_forecast(session, location=venue_name, lat=lat, lon=lon)
+                forecast = await get_weather_forecast(session, location=venue_name, lat=lat, lon=lon, spin_time=spin_time)
 
             await thinking_message.edit(content=forecast)
             print(f"[LOG] Weather check complete for '{thread.name}'.")
