@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 
 # Import config from the root directory
 from config import MEMBER_ROLE_ID, ALBUM_URL
