@@ -23,7 +23,7 @@ VENUES = {
     "carrick": {"lat": 53.15, "lon": -6.27},
     "ballinastoe": {"lat": 53.10, "lon": -6.28},
     "ballyhoura": {"lat": 52.33, "lon": -8.53},
-    "leadmines": {"lat": 53.23, "lon": -6.16}, # For "the lead mines" etc.
+    "lead mines": {"lat": 53.23, "lon": -6.16}, # For "the lead mines" etc.
 }
 
 if not TOKEN:
@@ -128,7 +128,7 @@ def is_member():
 #         ephemeral=True
 #     )
 
-def get_weather_forecast(location=None, lat=None, lon=None):
+async def get_weather_forecast(session: aiohttp.ClientSession, location=None, lat=None, lon=None):
     """Fetches a 3-hour forecast for a given location using OpenWeatherMap API."""
     if not OPENWEATHER_API_KEY:
         print("Warning: OPENWEATHER_API_KEY not configured.")
@@ -136,66 +136,67 @@ def get_weather_forecast(location=None, lat=None, lon=None):
 
     display_name = location.title() if location else "the specified location"
 
-    # --- Step 1: Get coordinates if not provided ---
-    if lat is None or lon is None:
-        if not location:
-            return "❌ No location or coordinates provided."
-
-        GEO_URL = f"http://api.openweathermap.org/geo/1.0/direct?q={location}&limit=1&appid={OPENWEATHER_API_KEY}"
-        try:
-            geo_response = aiohttp.get(GEO_URL)
-            geo_response.raise_for_status()
-            geo_data = geo_response.json()
-            if not geo_data:
-                return f"❌ Could not find location: **{location}**. Please check the spelling or be more specific."
-
-            lat = geo_data[0]['lat']
-            lon = geo_data[0]['lon']
-            country = geo_data[0]['country']
-            state = geo_data[0].get('state', '')
-            display_name = f"{location.title()}, {state}" if state else f"{location.title()}, {country}"
-
-        except aiohttp.exceptions.RequestException as e:
-            return f"🔥 Error connecting to Geocoding API: {e}"
-
-    # --- Step 2: Get weather forecast using coordinates ---
     try:
+        # --- Step 1: Get coordinates if not provided ---
+        if lat is None or lon is None:
+            print(f"[LOG] No coords provided. Geocoding location: '{location}'")
+            if not location:
+                return "❌ No location or coordinates provided."
+
+            GEO_URL = f"http://api.openweathermap.org/geo/1.0/direct?q={location}&limit=1&appid={OPENWEATHER_API_KEY}"
+            async with session.get(GEO_URL) as response:
+                response.raise_for_status()
+                geo_data = await response.json()
+                if not geo_data:
+                    return f"❌ Could not find location: **{location}**. Please check the spelling or be more specific."
+
+                lat = geo_data[0]['lat']
+                lon = geo_data[0]['lon']
+                country = geo_data[0]['country']
+                state = geo_data[0].get('state', '')
+                display_name = f"{location.title()}, {state}" if state else f"{location.title()}, {country}"
+        else:
+             print(f"[LOG] Using provided coordinates: Lat={lat}, Lon={lon}")
+
+        # --- Step 2: Get weather forecast using coordinates ---
+        print(f"[LOG] Fetching forecast from OpenWeatherMap API for Lat={lat}, Lon={lon}")
         weather_url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric"
-        weather_res = aiohttp.get(weather_url)
-        weather_res.raise_for_status()
-        forecast_data = weather_res.json()
+        async with session.get(weather_url) as response:
+            response.raise_for_status()
+            forecast_data = await response.json()
+            print("[LOG] Successfully parsed weather data.")
 
-        # Let's use the first forecast interval (usually +3 hours from now)
-        first_forecast = forecast_data['list'][0]
-        weather = first_forecast['weather'][0]
-        main = first_forecast['main']
-        wind = first_forecast['wind']
-        
-        # Get a weather emoji
-        icon = weather['icon']
-        if '01' in icon: emoji = '☀️' # clear
-        elif '02' in icon: emoji = '🌤️' # few clouds
-        elif '03' in icon: emoji = '☁️' # scattered clouds
-        elif '04' in icon: emoji = '🌥️' # broken clouds
-        elif '09' in icon: emoji = '🌧️' # shower rain
-        elif '10' in icon: emoji = '🌦️' # rain
-        elif '11' in icon: emoji = '⛈️' # thunderstorm
-        elif '13' in icon: emoji = '❄️' # snow
-        elif '50' in icon: emoji = '🌫️' # mist
-        else: emoji = '🚵'
+            # Let's use the first forecast interval (usually +3 hours from now)
+            first_forecast = forecast_data['list'][0]
+            weather = first_forecast['weather'][0]
+            main = first_forecast['main']
+            wind = first_forecast['wind']
+            
+            # Get a weather emoji
+            icon = weather['icon']
+            if '01' in icon: emoji = '☀️' # clear
+            elif '02' in icon: emoji = '🌤️' # few clouds
+            elif '03' in icon: emoji = '☁️' # scattered clouds
+            elif '04' in icon: emoji = '🌥️' # broken clouds
+            elif '09' in icon: emoji = '🌧️' # shower rain
+            elif '10' in icon: emoji = '🌦️' # rain
+            elif '11' in icon: emoji = '⛈️' # thunderstorm
+            elif '13' in icon: emoji = '❄️' # snow
+            elif '50' in icon: emoji = '🌫️' # mist
+            else: emoji = '🚵'
 
-        # Format the output message
-        forecast_time = datetime.datetime.fromtimestamp(first_forecast['dt']).strftime('%I:%M %p')
-        message = (
-            f"**Weather forecast for {display_name} (around {forecast_time})** {emoji}\n"
-            f"> **Condition:** {weather['description'].title()}\n"
-            f"> **Temp:** {main['temp']:.1f}°C (Feels like: {main['feels_like']:.1f}°C)\n"
-            f"> **Wind:** {wind['speed'] * 3.6:.1f} km/h\n"
-            f"_{Disclaimer: This is an automated forecast. Always check a reliable source before heading out!_}"
-        )
-        return message
+            # Format the output message
+            forecast_time = datetime.datetime.fromtimestamp(first_forecast['dt']).strftime('%I:%M %p')
+            message = (
+                f"**Weather forecast for {display_name} (around {forecast_time})** {emoji}\n"
+                f"> **Condition:** {weather['description'].title()}\n"
+                f"> **Temp:** {main['temp']:.1f}°C (Feels like: {main['feels_like']:.1f}°C)\n"
+                f"> **Wind:** {wind['speed'] * 3.6:.1f} km/h\n"
+                f"_{Disclaimer: This is an automated forecast. Always check a reliable source before heading out!_}"
+            )
+            return message
 
-    except aiohttp.exceptions.RequestException as e:
+    except aiohttp.ClientError as e:
         print(f"Error fetching weather data: {e}")
         return "🔧 The weather machine seems to be broken. Couldn't fetch the forecast."
     except (KeyError, IndexError):
@@ -230,6 +231,7 @@ async def on_thread_create(thread: discord.Thread):
     get the weather for the specified location.
     """
     if thread.parent.name.lower() == SPINS_CHANNEL_NAME.lower():
+        print(f"[LOG] New thread detected in '{thread.parent.name}': '{thread.name}'")
         thread_title_lower = thread.name.lower()
         found_venue_coords = None
         venue_name = None
@@ -238,6 +240,7 @@ async def on_thread_create(thread: discord.Thread):
             if name in thread_title_lower:
                 found_venue_coords = coords
                 venue_name = name.title()
+                print(f"[LOG] Found venue '{venue_name}' in thread title.")
                 break  # Stop after finding the first match
 
         if found_venue_coords:
@@ -245,12 +248,15 @@ async def on_thread_create(thread: discord.Thread):
             lon = found_venue_coords["lon"]
 
             thinking_message = await thread.send(f"🤔 Checking the weather for **{venue_name}**...")
-
-            # Run the blocking request in a separate thread to not block the bot
-            # This is better for performance.
-            forecast = await asyncio.to_thread(get_weather_forecast, location=venue_name, lat=lat, lon=lon)
+            
+            print(f"[LOG] Fetching weather for {venue_name}...")
+            async with aiohttp.ClientSession() as session:
+                forecast = await get_weather_forecast(session, location=venue_name, lat=lat, lon=lon)
 
             await thinking_message.edit(content=forecast)
+            print(f"[LOG] Weather check complete for '{thread.name}'.")
+        else:
+            print("[LOG] No matching venue found in thread title.")
 
 
 class OnboardingView(discord.ui.View):
@@ -310,7 +316,7 @@ async def on_app_command_error(interaction: discord.Interaction, error: app_comm
     if isinstance(error, app_commands.CheckFailure):
         if interaction.command.name == 'photos':
             await interaction.response.send_message(
-                "Sorry, this command is for members only. Please verify your membership to get access. 🤘",
+                "Sorry, this for members only. Please verify your membership to get access. 🤘",
                 ephemeral=True
             )
         elif interaction.command.name == 'verify':
