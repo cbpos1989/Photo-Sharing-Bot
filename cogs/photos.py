@@ -35,7 +35,7 @@ class PhotosCog(commands.Cog):
 
     @app_commands.command(name="photos", description="Get the link to the MAD MTB Google Photos album")
     @is_member()
-    async def photos(interaction: discord.Interaction):
+    async def photos(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=False)
 
         embed = discord.Embed(

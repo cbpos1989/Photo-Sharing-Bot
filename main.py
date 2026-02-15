@@ -7,14 +7,23 @@ from config import DISCORD_TOKEN
 
 intents = discord.Intents.default()
 intents.members = True
-intents.message_content = True # Important for some commands
+intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
-    print("------")
+    print("---")
+    print("Syncing command tree...")
+    try:
+        # Sync the application commands to Discord.
+        synced = await bot.tree.sync()
+        print(f"Successfully synced {len(synced)} command(s).")
+    except Exception as e:
+        print(f"Failed to sync command tree: {e}")
+    print("---")
+
 
 async def load_cogs():
     """Finds and loads all cogs in the 'cogs' directory."""
@@ -41,19 +50,16 @@ async def on_app_command_error(interaction: discord.Interaction, error: app_comm
             ephemeral=True
             )
         else:
-            # Generic message for any other CheckFailure
             await interaction.response.send_message("You don't have the required permissions for this command.", ephemeral=True)
 
-    # Case 2: The command is on cooldown (prevents spamming)
     elif isinstance(error, app_commands.CommandOnCooldown):
         await interaction.response.send_message(
             f"⏳ Whoa there! Slow down a second. Try again in {error.retry_after:.1f}s.",
             ephemeral=True
         )
 
-    # Case 3: The generic "Catch All" for anything else
     else:
-        print(f"Unhandled Error: {error}") # This still goes to Railway logs for you
+        print(f"Unhandled Error for command '{interaction.command.name}': {error}")
         await interaction.response.send_message(
             "🔧 **Trail Maintenance!** Something went wrong on my end. Please try again or ping a Committee member if it keeps happening.",
             ephemeral=True
