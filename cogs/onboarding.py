@@ -32,13 +32,16 @@ class OnboardingView(discord.ui.View):
 
         await self.assign_basic_role(interaction)
 
-        admin_channel = interaction.client.get_channel(COMMITTEE_CHANNEL_ID)
+        admin_channel = interaction.guild.get_channel(COMMITTEE_CHANNEL_ID)
         if admin_channel:
             await admin_channel.send(
                 f"🔔 **Verification Needed:**\n"
                 f"User: {interaction.user.mention} ({interaction.user.display_name})\n"
                 f"Hey <@&{COMMITTE_ROLE_ID}>, please verify this member against the CI Active Members list!‍"
             )
+        else:
+             # This will help debug if the ID is wrong or the bot lacks permissions
+            print(f"[ERROR] Could not find or access COMMITTEE_CHANNEL_ID: {COMMITTEE_CHANNEL_ID}")
 
         await interaction.followup.send(
             "Got it! I've pinged the committee. We'll verify your membership and get you sorted shortly. 🤘",
@@ -66,8 +69,19 @@ class OnboardingCog(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    @app_commands.check(is_welcome_channel)
-    async def on_member_join(member):
+    async def on_member_join(self, member):
+        # Ignore bots joining
+        if member.bot:
+            return
+
+        # Fetch the channel from the config ID
+        welcome_channel = member.guild.get_channel(WELCOME_CHANNEL_ID)
+
+        # If the bot is on a server without that channel, do nothing.
+        if not welcome_channel:
+            print(f"[ERROR] on_member_join: Could not find channel with ID {WELCOME_CHANNEL_ID}")
+            return
+
         embed = discord.Embed(
             title=f"A new rider has joined! 🚵‍♂️💨",
             description=(
