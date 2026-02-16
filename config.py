@@ -55,5 +55,9 @@ EXCLUDED_ROLES = [
     "Committee",
     "Moderator",
     "Tester Role",
-    "Non Members"
+    "Non Members",
+    "Server Booster"
+    "Parents & Kids Committee"
+    "Women's Spins Committee"
+    "Parents & Kids Committee"
 ]
