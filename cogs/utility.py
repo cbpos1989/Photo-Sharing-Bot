@@ -16,7 +16,7 @@ class RoleSelect(discord.ui.Select):
             if role in member.roles:
                 description = "You have this role. Click to remove it."
             else:
-                description = f"Click to add the '{role.name}' role."
+                description = f"Click to add this role."
 
             options.append(discord.SelectOption(
                 label=role.name,
