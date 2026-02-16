@@ -19,6 +19,16 @@ PUBLIC_GENERAL_CHANNEL_ID = 1018922510533791868
 # Misc
 ALBUM_URL = os.getenv('ALBUM_URL')
 
+# Stravaduro Links
+# URL for each round (index 0=Jan, 1=Feb, 2=Mar, etc.)
+STRAVADURO_SUBMISSION_URLS = [
+    "https://docs.google.com/forms/d/e/1FAIpQLSeIVDT6q3lqL8MTj5pi2LpJrKAQyvwYIpXrzDa91C3WOzFvow/viewform",  # Round 1
+    "https://docs.google.com/forms/d/e/1FAIpQLSdncnBDFGISePF3uy2YdX4bQR2d-c8DCFTFo4rUQ6vpa-ulpg/viewform",  # Round 2
+    "https://docs.google.com/forms/d/e/1FAIpQLSdl1Df_m41OC_oFbQxQfbMpm9CDyOxEPGPLVSbj1FzdGbPZ7Q/viewform"   # Round 3
+]
+STRAVADURO_LEADERBOARD_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTQsPKkqn2z1E9t-0orqTZ6n1p_ZmesLELJYZ0gM9ZnpFvMP_TiQGLRSAqQVOPU15Uo4E5bWJkJaqGt/pubhtml?gid=2015029253&single=true"
+
+
 # Weather Feature Config
 VENUES = {
     "ticknock": {"lat": 53.24, "lon": -6.23},

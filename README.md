@@ -23,6 +23,7 @@ This bot is built on a modular, cog-based architecture to easily manage and add 
 
 - **/spin-template:** Generates a pre-formatted template for posting a new club spin. This ensures all necessary details like time, location, distance, and difficulty are included, promoting consistency.
 - **/photos:** Provides a quick and easy link to the club's shared photo album, encouraging members to upload and share their ride photos and videos.
+- **/stravaduro:** Provides links for the club's Stravaduro competition. It's time-aware and will automatically provide the correct submission link for the current month's round.
 
 ## Project Structure
 
