@@ -54,4 +54,6 @@ EXCLUDED_ROLES = [
     "Club Members",
     "Committee"
     "Moderator"
+    "Tester Role"
+    "Non Members"
 ]

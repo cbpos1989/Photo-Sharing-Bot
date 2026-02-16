@@ -107,7 +107,6 @@ class UtilityCog(commands.Cog):
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-
     @app_commands.command(
         name="roles",
         description="Choose your own roles to get notified for rides you're interested in."
@@ -115,10 +114,14 @@ class UtilityCog(commands.Cog):
     async def roles(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 
+        excluded_roles_normalized = {name.lower().strip() for name in EXCLUDED_ROLES}
+
         # Filter out roles that are managed by integrations (bots), are in the excluded list, or have no name.
         assignable_roles = [
             role for role in interaction.guild.roles
-            if not role.is_integration() and not role.is_bot_managed() and role.name not in EXCLUDED_ROLES
+            if (not role.is_integration() and
+                not role.is_bot_managed() and
+                role.name.lower().strip() not in excluded_roles_normalized)
         ]
 
         if not assignable_roles:
@@ -139,7 +142,7 @@ class UtilityCog(commands.Cog):
         view = RoleSelectView(assignable_roles)
 
         await interaction.followup.send(embed=embed, view=view, ephemeral=True)
-        
+
 # This setup function is required for the bot to load the Cog
 async def setup(bot: commands.Bot):
     await bot.add_cog(UtilityCog(bot))
