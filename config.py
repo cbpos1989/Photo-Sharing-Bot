@@ -28,7 +28,6 @@ STRAVADURO_SUBMISSION_URLS = [
 ]
 STRAVADURO_LEADERBOARD_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTQsPKkqn2z1E9t-0orqTZ6n1p_ZmesLELJYZ0gM9ZnpFvMP_TiQGLRSAqQVOPU15Uo4E5bWJkJaqGt/pubhtml?gid=2015029253&single=true"
 
-
 # Weather Feature Config
 VENUES = {
     "ticknock": {"lat": 53.24, "lon": -6.23},
@@ -46,3 +45,13 @@ VENUES = {
     "moneystown": {"lat": 53.00, "lon": -6.22},
     "trooperstown": {"lat": 53.00, "lon": -6.22},
 }
+
+# Roles to exclude from the self-assignable list
+EXCLUDED_ROLES = [
+    "@everyone",
+    "Admin",
+    "MAD Helper Bot",
+    "Club Members",
+    "Committee"
+    "Moderator"
+]
