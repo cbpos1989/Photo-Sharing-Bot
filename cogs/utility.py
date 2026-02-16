@@ -47,7 +47,7 @@ class RoleSelect(discord.ui.Select):
         # Toggle the role for the user
         if role in member.roles:
             await member.remove_roles(role)
-            await interaction.followup.send(f"✅ The **{role.name}** role has been removed.", ephemeral=True)
+            await interaction.followup.send(f"🚫 The **{role.name}** role has been removed.", ephemeral=True)
         else:
             await member.add_roles(role)
             await interaction.followup.send(f"✅ You have been assigned the **{role.name}** role.", ephemeral=True)
