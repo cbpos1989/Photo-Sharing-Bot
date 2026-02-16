@@ -8,15 +8,22 @@ from config import STRAVADURO_SUBMISSION_URLS, STRAVADURO_LEADERBOARD_URL, EXCLU
 # --- Role Select View ---
 # A Dropdown menu to select roles
 class RoleSelect(discord.ui.Select):
-    def __init__(self, roles: list[discord.Role]):
-        # Set the options that will be presented inside the dropdown
-        options = [
-            discord.SelectOption(
+    def __init__(self, roles: list[discord.Role], member: discord.Member):
+        options = []
+
+        for role in roles:
+            # Set the description based on whether the member already has the role
+            if role in member.roles:
+                description = "You have this role. Click to remove it."
+            else:
+                description = f"Click to add the '{role.name}' role."
+
+            options.append(discord.SelectOption(
                 label=role.name,
-                description=f"Click to add or remove the '{role.name}' role.",
+                description=description,
                 value=str(role.id)
-            ) for role in roles
-        ]
+            ))
+        
         super().__init__(
             placeholder="Choose a role to add or remove...",
             min_values=1,
@@ -47,9 +54,9 @@ class RoleSelect(discord.ui.Select):
 
 # A View to hold the RoleSelect dropdown
 class RoleSelectView(discord.ui.View):
-    def __init__(self, roles: list[discord.Role]):
+    def __init__(self, roles: list[discord.Role], member: discord.Member):
         super().__init__()
-        self.add_item(RoleSelect(roles))
+        self.add_item(RoleSelect(roles, member))
 
 # The Cog Class
 class UtilityCog(commands.Cog):
@@ -131,6 +138,8 @@ class UtilityCog(commands.Cog):
         # Sort roles alphabetically
         assignable_roles.sort(key=lambda r: r.name)
 
+        member = interaction.user
+
         # Create an embed to list the roles
         embed = discord.Embed(
             title="Self-Assignable Roles",
@@ -139,7 +148,7 @@ class UtilityCog(commands.Cog):
         )
 
         # The view will contain the dropdown menu
-        view = RoleSelectView(assignable_roles)
+        view = RoleSelectView(assignable_roles, member)
 
         await interaction.followup.send(embed=embed, view=view, ephemeral=True)
 
