@@ -52,8 +52,8 @@ EXCLUDED_ROLES = [
     "Admin",
     "MAD Helper Bot",
     "Club Members",
-    "Committee"
-    "Moderator"
-    "Tester Role"
+    "Committee",
+    "Moderator",
+    "Tester Role",
     "Non Members"
 ]
