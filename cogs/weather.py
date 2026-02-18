@@ -117,6 +117,8 @@ class WeatherCog(commands.Cog):
         When a new thread is created in the SPINS_CHANNEL_NAME,
         get the weather for the specified location.
         """
+        print(f"[LOG] New thread detected in '{thread.parent.name.lower()}': '{SPINS_CHANNEL_NAME.lower()}'")
+        print(f"[LOG] thread.parent.name.lower() == SPINS_CHANNEL_NAME.lower() '{thread.parent.name.lower() == SPINS_CHANNEL_NAME.lower()}'")
         if thread.parent.name.lower() == SPINS_CHANNEL_NAME.lower():
             print(f"[LOG] New thread detected in '{thread.parent.name}': '{thread.name}'")
             thread_title_lower = thread.name.lower()
