@@ -59,7 +59,6 @@ class OnboardingView(discord.ui.View):
     @staticmethod
     async def _send_rules_briefing(interaction: discord.Interaction, is_modal_response: bool = False) -> None:
         """A helper to send a consistent ephemeral message to the user."""
-        print(f"_send_rules_briefing( {is_modal_response} )")
         rules_channel = interaction.guild.get_channel(RULES_CHANNEL_ID)
         rules_mention = rules_channel.mention if rules_channel else "`#rules`"
 
@@ -75,8 +74,8 @@ class OnboardingView(discord.ui.View):
         else: 
             message_content: str = (
                 f"Welcome to MAD! 🚵‍♂️ Feel free to browse the <#{PUBLIC_EVENTS_CHANNEL_ID}> channel "
-                f"in the Public Section or check out <#{PUBLIC_GENERAL_CHANNEL_ID}> and join us for a ride soon!\n"
-                f"Just one last thing...**\n\n"
+                f"in the Public Section or check out <#{PUBLIC_GENERAL_CHANNEL_ID}> and join us for a ride soon!\n\n"
+                f"**Just one last thing...**\n\n"
                 f"**Read the Rules:** Please read the server rules in the {rules_mention} channel.\n\n"
                 f"Use the `/help` command to see what else the bot can do!"
             )
@@ -85,7 +84,6 @@ class OnboardingView(discord.ui.View):
         if is_modal_response:
             await interaction.response.send_message(message_content, ephemeral=True)
         else:
-            print(f"sending followup")
             await interaction.followup.send(message_content, ephemeral=True)
 
     async def assign_basic_role(self, interaction: discord.Interaction) -> None:
