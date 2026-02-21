@@ -7,7 +7,7 @@ from config import (
     WELCOME_CHANNEL_ID,
     COMMITTEE_CHANNEL_ID,
     COMMITTE_ROLE_ID,
-    MEMBER_ROLE_ID,
+    RULES_CHANNEL_ID,
     PUBLIC_EVENTS_CHANNEL_ID,
     PUBLIC_GENERAL_CHANNEL_ID
 )
@@ -15,12 +15,76 @@ from config import (
 def is_welcome_channel(interaction: discord.Interaction) -> bool:
     return interaction.channel_id == WELCOME_CHANNEL_ID
 
+class MemberVerificationModal(discord.ui.Modal, title="Paid Member Verification"):
+    """A modal to capture Full Name and Email for verification."""
+    full_name = discord.ui.TextInput(
+        label="Full Name",
+        placeholder="e.g., John Smith",
+        required=True,
+        style=discord.TextStyle.short,
+        max_length=50,
+    )
+
+    email = discord.ui.TextInput(
+        label="Email Address",
+        placeholder="Used for committee verification only",
+        required=True,
+        style=discord.TextStyle.short,
+        max_length=100,
+    )
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        """Handle the modal submission logic."""
+        # 1. Log the captured data to the private committee channel.
+        admin_channel = interaction.guild.get_channel(COMMITTEE_CHANNEL_ID)
+        if admin_channel:
+            await admin_channel.send(
+                f"🔔 **New Paid Member Verification:**\n"
+                f"**Discord User:** {interaction.user.mention} ({interaction.user.display_name})\n"
+                f"**Full Name:** `{self.full_name.value}`\n"
+                f"**Email:** `{self.email.value}`\n\n"
+                f"Hey <@&{COMMITTE_ROLE_ID}>, please verify this member against the CI Active Members list and assign the correct role.‍"
+            )
+        else:
+            print(f"[ERROR] Could not find or access COMMITTEE_CHANNEL_ID: {COMMITTEE_CHANNEL_ID}")
+
+        # 2. Send the final ephemeral instructions to the user.
+        await OnboardingView._send_rules_briefing(interaction, is_modal_response=True, is_paid_member=True)
+
 class OnboardingView(discord.ui.View):
-    def __init__(self):
+    def __init__(self) -> None:
         # timeout=None is key for persistence!
         super().__init__(timeout=None)
 
-    async def assign_basic_role(self, interaction: discord.Interaction):
+    async def _send_rules_briefing(interaction: discord.Interaction, is_modal_response: bool = False, is_paid_member: bool = False) -> None:
+        """A helper to send a consistent ephemeral message to the user."""
+        rules_channel = interaction.guild.get_channel(RULES_CHANNEL_ID)
+        rules_mention = rules_channel.mention if rules_channel else "`#rules`"
+
+        if is_paid_member:
+            message_content: str = (
+                f"Welcome to MAD! 🚵‍♂️ Feel free to browse the <#{PUBLIC_EVENTS_CHANNEL_ID}> channel "
+                f"in the Public Section or check out <#{PUBLIC_GENERAL_CHANNEL_ID}> and join us for a ride soon!"
+                f"2. **Read the Rules:** Please read the server rules in the {rules_mention} channel.\n\n"
+                f"Use the `/help` command to see what the bot can do!"
+            )
+        else: 
+            message_content: str = (
+                "Got it! I've pinged the committee. We'll verify your membership and get you sorted shortly. 🤘"
+                f"Just one last thing...**\n\n"
+                f"1. **Set Your Nickname:** Please change your server nickname to your **Full Name**. This is mandatory for all members to help us identify you on rides. "
+                f"*(Right-click your profile > Edit Server Profile)*\n\n"
+                f"2. **Read the Rules:** Please read the server rules in the {rules_mention} channel.\n\n"
+                f"Use the `/help` command to see what the bot can do!"
+            ) 
+
+        # A modal submission requires a new response. A button click uses a followup.
+        if is_modal_response:
+            await interaction.response.send_message(message_content, ephemeral=True)
+        else:
+            await interaction.followup.send(message_content, ephemeral=True)
+
+    async def assign_basic_role(self, interaction: discord.Interaction) -> None:
         NON_MEMBER_ROLE_ID = 1098262331823231007
         role = interaction.guild.get_role(NON_MEMBER_ROLE_ID)
 
@@ -34,52 +98,32 @@ class OnboardingView(discord.ui.View):
         style=discord.ButtonStyle.green,
         custom_id="mad_paid_member"
     )
-    async def paid_member(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer(ephemeral=True)
-
+    async def paid_member(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         await self.assign_basic_role(interaction)
 
-        admin_channel = interaction.guild.get_channel(COMMITTEE_CHANNEL_ID)
-        if admin_channel:
-            await admin_channel.send(
-                f"🔔 **Verification Needed:**\n"
-                f"User: {interaction.user.mention} ({interaction.user.display_name})\n"
-                f"Hey <@&{COMMITTE_ROLE_ID}>, please verify this member against the CI Active Members list!‍"
-            )
-        else:
-             # This will help debug if the ID is wrong or the bot lacks permissions
-            print(f"[ERROR] Could not find or access COMMITTEE_CHANNEL_ID: {COMMITTEE_CHANNEL_ID}")
+        await interaction.response.send_modal(MemberVerificationModal())
 
-        await interaction.followup.send(
-            "Got it! I've pinged the committee. We'll verify your membership and get you sorted shortly. 🤘",
-            ephemeral=True
-        )
 
     @discord.ui.button(
         label="I'm a Guest / New Rider",
         style=discord.ButtonStyle.blurple,
         custom_id="mad_guest"
     )
-    async def guest_member(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def guest_member(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         await interaction.response.defer(ephemeral=True)
 
         await self.assign_basic_role(interaction)
 
-        await interaction.followup.send(
-            (
-                f"Welcome to MAD! 🚵‍♂️ Feel free to browse the <#{PUBLIC_EVENTS_CHANNEL_ID}> channel "
-                f"in the Public Section or check out <#{PUBLIC_GENERAL_CHANNEL_ID}> and join us for a ride soon!"
-            ),
-            ephemeral=True
-        )
+        await self._send_rules_briefing(interaction)
 
 # The Cog Class
 class OnboardingCog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
+        self.bot.add_view(OnboardingView())
 
     @commands.Cog.listener()
-    async def on_member_join(self, member):
+    async def on_member_join(self, member) -> None:
         # Ignore bots joining
         if member.bot:
             return
@@ -109,7 +153,7 @@ class OnboardingCog(commands.Cog):
 
     @app_commands.command(name="verify", description="Start your MAD MTB onboarding")
     @app_commands.check(is_welcome_channel)
-    async def verify(self, interaction: discord.Interaction):
+    async def verify(self, interaction: discord.Interaction) -> None:
         # This simulates the message that would be sent to a new joiner
         embed = discord.Embed(
             title=f"Welcome to MAD MTB!, {interaction.user.display_name}! 🚵‍♂️",
@@ -129,5 +173,5 @@ class OnboardingCog(commands.Cog):
         )
 
 # This setup function is required for the bot to load the Cog
-async def setup(bot: commands.Bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(OnboardingCog(bot))
