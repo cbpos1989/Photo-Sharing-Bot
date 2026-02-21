@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 from datetime import datetime
 
-from config import STRAVADURO_SUBMISSION_URLS, STRAVADURO_LEADERBOARD_URL, EXCLUDED_ROLES
+from config import STRAVADURO_SUBMISSION_URLS, STRAVADURO_LEADERBOARD_URL, EXCLUDED_ROLES, RULES_CHANNEL_ID, DISCORD_HELP_CHANNEL_ID
 
 # --- Role Select View ---
 # A Dropdown menu to select roles
@@ -151,6 +151,71 @@ class UtilityCog(commands.Cog):
         view = RoleSelectView(assignable_roles, member)
 
         await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+
+    @app_commands.command(name="help", description="Shows a categorized list of bot commands.")
+    async def help(self, interaction: discord.Interaction):
+        """Displays a comprehensive, categorized help message for the bot."""
+        await interaction.response.defer(ephemeral=True)
+
+        # --- Embed Creation ---
+        embed = discord.Embed(
+            title="MAD MTB Bot Commands",
+            description="Here's a breakdown of what I can do. For more details, please read the club rules!",
+            color=discord.Color.blurple()
+        )
+
+        if self.bot.user and self.bot.user.avatar:
+            embed.set_thumbnail(url=self.bot.user.avatar.url)
+
+        # General Commands
+        embed.add_field(
+            name="🛠️ General & Onboarding",
+            value=(
+                "`/verify`: Start the onboarding process to get server access.\n"
+                "`/help`: Shows this help message.\n"
+                "`/trails`: Check local trail conditions (*Coming Soon*)."
+            ),
+            inline=False
+        )
+
+        # Spin Organization Commands
+        embed.add_field(
+            name="🚴 Spin & Ride-Outs",
+            value=(
+                "`/spin-template`: Get a template for posting a new club spin.\n"
+                "`/post-spin`: A guided command to create a spin (*Coming Soon*).\n"
+                "`/spin-grade`: Set the grade of your next spin (*Coming Soon*)."
+            ),
+            inline=False
+        )
+
+        # Informational Commands
+        embed.add_field(
+            name="ℹ️ Information",
+            value=(
+                "`/photos`: Get the link to the shared club Google Photos Album.\n"
+                "`/roles`: Choose your own roles for ride notifications.\n"
+                "`/stravaduro`: Get links for the Stravaduro competition."
+            ),
+            inline=False
+        )
+        
+        embed.set_footer(text="For bot support, please ask in the <#{DISCORD_HELP_CHANNEL_ID}> channel.")
+
+        # --- View with Button ---
+        view = discord.ui.View()
+        # This requires RULES_CHANNEL_ID to be set in your config.py
+        try:
+            if RULES_CHANNEL_ID:
+                # Construct the URL to the rules channel
+                rules_url = f"https://discord.com/channels/{interaction.guild.id}/{RULES_CHANNEL_ID}"
+                view.add_item(discord.ui.Button(label="📜 Club Rules", style=discord.ButtonStyle.link, url=rules_url))
+        except NameError:
+            # This will happen if RULES_CHANNEL_ID is not defined in config.py
+            # The button will simply not be added, which is a graceful fallback.
+            pass
+
+        await interaction.followup.send(embed=embed, view=view)
 
 # This setup function is required for the bot to load the Cog
 async def setup(bot: commands.Bot):
