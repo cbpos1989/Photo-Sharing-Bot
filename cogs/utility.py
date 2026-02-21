@@ -3,20 +3,20 @@ from discord.ext import commands
 from discord import app_commands
 from datetime import datetime
 
-from config import STRAVADURO_SUBMISSION_URLS, STRAVADURO_LEADERBOARD_URL, EXCLUDED_ROLES
+from config import STRAVADURO_SUBMISSION_URLS, STRAVADURO_LEADERBOARD_URL, EXCLUDED_ROLES, RULES_CHANNEL_ID, DISCORD_HELP_CHANNEL_ID, DISCORD_HOW_TO_CHANNEL_ID
 
 # --- Role Select View ---
 # A Dropdown menu to select roles
 class RoleSelect(discord.ui.Select):
-    def __init__(self, roles: list[discord.Role], member: discord.Member):
-        options = []
+    def __init__(self, roles: list[discord.Role], member: discord.Member) -> None:
+        options: list[Unknown] = []
 
         for role in roles:
             # Set the description based on whether the member already has the role
             if role in member.roles:
                 description = "You have this role. Click to remove it."
             else:
-                description = f"Click to add this role."
+                description = "Click to add this role."
 
             options.append(discord.SelectOption(
                 label=role.name,
@@ -31,7 +31,7 @@ class RoleSelect(discord.ui.Select):
             options=options,
         )
 
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction) -> None:
         # Defer the response to prevent timeout
         await interaction.response.defer(ephemeral=True)
 
@@ -54,17 +54,17 @@ class RoleSelect(discord.ui.Select):
 
 # A View to hold the RoleSelect dropdown
 class RoleSelectView(discord.ui.View):
-    def __init__(self, roles: list[discord.Role], member: discord.Member):
+    def __init__(self, roles: list[discord.Role], member: discord.Member) -> None:
         super().__init__()
         self.add_item(RoleSelect(roles, member))
 
 # The Cog Class
 class UtilityCog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
     @app_commands.command(name="spin-template", description="Generate a template for posting a new club spin")
-    async def spin_template(self, interaction: discord.Interaction):
+    async def spin_template(self, interaction: discord.Interaction) -> None:
         # This template is pulled directly from your MAD Committee guidelines
         template = (
             "**MAD MTB Spin Details**\n"
@@ -84,7 +84,7 @@ class UtilityCog(commands.Cog):
         await interaction.response.send_message(template, ephemeral=True)
 
     @app_commands.command(name="stravaduro", description="Get links for Stravaduro submissions and leaderboards.")
-    async def stravaduro(self, interaction: discord.Interaction):
+    async def stravaduro(self, interaction: discord.Interaction) -> None:
         current_month = datetime.now().month
         submission_text = ""
         # The array is 0-indexed, so January (month 1) is index 0.
@@ -118,13 +118,13 @@ class UtilityCog(commands.Cog):
         name="roles",
         description="Choose your own roles to get notified for rides you're interested in."
     )
-    async def roles(self, interaction: discord.Interaction):
+    async def roles(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer(ephemeral=True)
 
-        excluded_roles_normalized = {name.lower().strip() for name in EXCLUDED_ROLES}
+        excluded_roles_normalized: set[str] = {name.lower().strip() for name in EXCLUDED_ROLES}
 
         # Filter out roles that are managed by integrations (bots), are in the excluded list, or have no name.
-        assignable_roles = [
+        assignable_roles: list[Unknown] = [
             role for role in interaction.guild.roles
             if (not role.is_integration() and
                 not role.is_bot_managed() and
@@ -152,6 +152,77 @@ class UtilityCog(commands.Cog):
 
         await interaction.followup.send(embed=embed, view=view, ephemeral=True)
 
+    @app_commands.command(name="help", description="Shows a categorized list of bot commands.")
+    async def help(self, interaction: discord.Interaction) -> None:
+        """Displays a comprehensive, categorized help message for the bot."""
+        await interaction.response.defer(ephemeral=True)
+
+        # --- Embed Creation ---
+        embed = discord.Embed(
+            title="MAD MTB Bot Commands",
+            description="Here's a breakdown of what I can do. For more details, please read the club rules!",
+            color=discord.Color.blurple()
+        )
+
+        if self.bot.user and self.bot.user.avatar:
+            embed.set_thumbnail(url=self.bot.user.avatar.url)
+
+        # General Commands
+        embed.add_field(
+            name="🛠️ General & Onboarding",
+            value=(
+                "`/verify`: Start the onboarding process to get server access.\n"
+                "`/help`: Shows this help message.\n"
+                "`/trails`: Check local trail conditions (*Coming Soon*)."
+            ),
+            inline=False
+        )
+
+        # Spin Organization Commands
+        embed.add_field(
+            name="🚴 Spin & Ride-Outs",
+            value=(
+                "`/spin-template`: Get a template for posting a new club spin.\n"
+                "`/post-spin`: A guided command to create a spin (*Coming Soon*).\n"
+                "`/spin-grade`: Set the grade of your next spin (*Coming Soon*)."
+            ),
+            inline=False
+        )
+
+        # Informational Commands
+        embed.add_field(
+            name="ℹ️ Information",
+            value=(
+                "`/photos`: Get the link to the shared club Google Photos Album.\n"
+                "`/roles`: Choose your own roles for ride notifications.\n"
+                "`/stravaduro`: Get links for the Stravaduro competition."
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="🤝 Support",
+            value=f"For bot support, please ask in the <#{DISCORD_HELP_CHANNEL_ID}> channel.",
+            inline=False
+        )
+
+        # --- View with Button ---
+        view = discord.ui.View()
+        # This requires RULES_CHANNEL_ID to be set in your config.py
+        try:
+            if RULES_CHANNEL_ID & DISCORD_HOW_TO_CHANNEL_ID:
+                # Construct the URL to the rules channel
+                rules_url: str = f"https://discord.com/channels/{interaction.guild.id}/{RULES_CHANNEL_ID}"
+                how_to_url: str = f"https://discord.com/channels/{interaction.guild.id}/{DISCORD_HOW_TO_CHANNEL_ID}"
+                view.add_item(discord.ui.Button(label="📜 Club Rules", style=discord.ButtonStyle.link, url=rules_url))
+                view.add_item(discord.ui.Button(label="🔨 How To", style=discord.ButtonStyle.link, url=how_to_url))
+        except NameError:
+            # This will happen if RULES_CHANNEL_ID or DISCORD_HOW_TO_CHANNEL_ID are not defined in config.py
+            # The button will simply not be added, which is a graceful fallback.
+            pass
+
+        await interaction.followup.send(embed=embed, view=view)
+
 # This setup function is required for the bot to load the Cog
-async def setup(bot: commands.Bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(UtilityCog(bot))
