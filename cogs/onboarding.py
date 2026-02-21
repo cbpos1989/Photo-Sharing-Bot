@@ -56,6 +56,7 @@ class OnboardingView(discord.ui.View):
         # timeout=None is key for persistence!
         super().__init__(timeout=None)
 
+    @staticmethod
     async def _send_rules_briefing(interaction: discord.Interaction, is_modal_response: bool = False) -> None:
         """A helper to send a consistent ephemeral message to the user."""
         print(f"_send_rules_briefing( {is_modal_response} )")
