@@ -49,34 +49,35 @@ class MemberVerificationModal(discord.ui.Modal, title="Paid Member Verification"
             print(f"[ERROR] Could not find or access COMMITTEE_CHANNEL_ID: {COMMITTEE_CHANNEL_ID}")
 
         # 2. Send the final ephemeral instructions to the user.
-        await OnboardingView._send_rules_briefing(interaction, is_modal_response=True, is_paid_member=True)
+        await OnboardingView._send_rules_briefing(interaction, is_modal_response=True)
 
 class OnboardingView(discord.ui.View):
     def __init__(self) -> None:
         # timeout=None is key for persistence!
         super().__init__(timeout=None)
 
-    async def _send_rules_briefing(interaction: discord.Interaction, is_modal_response: bool = False, is_paid_member: bool = False) -> None:
+    async def _send_rules_briefing(interaction: discord.Interaction, is_modal_response: bool = False) -> None:
         """A helper to send a consistent ephemeral message to the user."""
         rules_channel = interaction.guild.get_channel(RULES_CHANNEL_ID)
         rules_mention = rules_channel.mention if rules_channel else "`#rules`"
 
-        if is_paid_member:
+        if is_modal_response:
             message_content: str = (
-                f"Welcome to MAD! 🚵‍♂️ Feel free to browse the <#{PUBLIC_EVENTS_CHANNEL_ID}> channel "
-                f"in the Public Section or check out <#{PUBLIC_GENERAL_CHANNEL_ID}> and join us for a ride soon!"
-                f"2. **Read the Rules:** Please read the server rules in the {rules_mention} channel.\n\n"
-                f"Use the `/help` command to see what the bot can do!"
-            )
-        else: 
-            message_content: str = (
-                "Got it! I've pinged the committee. We'll verify your membership and get you sorted shortly. 🤘"
+                f"Got it! I've pinged the committee. We'll verify your membership and get you sorted shortly. 🤘\n"
                 f"Just one last thing...**\n\n"
                 f"1. **Set Your Nickname:** Please change your server nickname to your **Full Name**. This is mandatory for all members to help us identify you on rides. "
                 f"*(Right-click your profile > Edit Server Profile)*\n\n"
                 f"2. **Read the Rules:** Please read the server rules in the {rules_mention} channel.\n\n"
                 f"Use the `/help` command to see what the bot can do!"
             ) 
+        else: 
+            message_content: str = (
+                f"Welcome to MAD! 🚵‍♂️ Feel free to browse the <#{PUBLIC_EVENTS_CHANNEL_ID}> channel "
+                f"in the Public Section or check out <#{PUBLIC_GENERAL_CHANNEL_ID}> and join us for a ride soon!\n"
+                f"Just one last thing...**\n\n"
+                f"**Read the Rules:** Please read the server rules in the {rules_mention} channel.\n\n"
+                f"Use the `/help` command to see what else the bot can do!"
+            )
 
         # A modal submission requires a new response. A button click uses a followup.
         if is_modal_response:
