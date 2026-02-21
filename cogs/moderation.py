@@ -15,7 +15,7 @@ class ModerationCog(commands.Cog, name="Moderation"):
     def cog_unload(self) -> None:
         self.cleanup_unverified_members.cancel()
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(hours=24)
     async def cleanup_unverified_members(self) -> None:
         """
         Periodically scans the server for users who have not completed verification
@@ -58,7 +58,7 @@ class ModerationCog(commands.Cog, name="Moderation"):
 
         for member in members_to_kick:
             try:
-                # await member.kick(reason="Automatic cleanup: Unverified for > 14 days.")
+                await member.kick(reason="Automatic cleanup: Unverified for > 14 days.")
                 kicked_count += 1
                 # Optional: Log each kick to the console for debugging
                 print(f"Kicked {member} (ID: {member.id}). Reason: Unverified for > 14 days.")
