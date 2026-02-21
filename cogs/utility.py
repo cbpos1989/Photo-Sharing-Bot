@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 from datetime import datetime
 
-from config import STRAVADURO_SUBMISSION_URLS, STRAVADURO_LEADERBOARD_URL, EXCLUDED_ROLES, RULES_CHANNEL_ID, DISCORD_HELP_CHANNEL_ID
+from config import STRAVADURO_SUBMISSION_URLS, STRAVADURO_LEADERBOARD_URL, EXCLUDED_ROLES, RULES_CHANNEL_ID, DISCORD_HELP_CHANNEL_ID, DISCORD_HOW_TO_CHANNEL_ID
 
 # --- Role Select View ---
 # A Dropdown menu to select roles
@@ -210,12 +210,14 @@ class UtilityCog(commands.Cog):
         view = discord.ui.View()
         # This requires RULES_CHANNEL_ID to be set in your config.py
         try:
-            if RULES_CHANNEL_ID:
+            if RULES_CHANNEL_ID & DISCORD_HOW_TO_CHANNEL_ID:
                 # Construct the URL to the rules channel
                 rules_url = f"https://discord.com/channels/{interaction.guild.id}/{RULES_CHANNEL_ID}"
+                how_to_url = f"https://discord.com/channels/{interaction.guild.id}/{DISCORD_HOW_TO_CHANNEL_ID}"
                 view.add_item(discord.ui.Button(label="📜 Club Rules", style=discord.ButtonStyle.link, url=rules_url))
+                view.add_item(discord.ui.Button(label="🔨 How To", style=discord.ButtonStyle.link, url=how_to_url))
         except NameError:
-            # This will happen if RULES_CHANNEL_ID is not defined in config.py
+            # This will happen if RULES_CHANNEL_ID or DISCORD_HOW_TO_CHANNEL_ID are not defined in config.py
             # The button will simply not be added, which is a graceful fallback.
             pass
 
