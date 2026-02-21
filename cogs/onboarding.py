@@ -117,7 +117,7 @@ class OnboardingView(discord.ui.View):
 
         await self.assign_basic_role(interaction)
 
-        await self._send_rules_briefing(interaction)
+        await self._send_rules_briefing(interaction, is_modal_response=False)
 
 # The Cog Class
 class OnboardingCog(commands.Cog):
