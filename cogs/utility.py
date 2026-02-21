@@ -199,8 +199,12 @@ class UtilityCog(commands.Cog):
             ),
             inline=False
         )
-        
-        embed.set_footer(text=f"For bot support, please ask in the <#{DISCORD_HELP_CHANNEL_ID}> channel.")
+
+        embed.add_field(
+            name="🤝 Support",
+            value=f"For bot support, please ask in the <#{DISCORD_HELP_CHANNEL_ID}> channel.",
+            inline=False
+        )
 
         # --- View with Button ---
         view = discord.ui.View()
