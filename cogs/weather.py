@@ -184,7 +184,7 @@ class WeatherCog(commands.Cog):
                 wind_speed_kmh = wind_speed_ms * 3.6  # Convert m/s to km/h
                 rain_3h = closest_forecast.get('rain', {}).get('3h', 0)
 
-                irish_time = spin_timestamp.astimezone(ZoneInfo("Europe/Dublin"))
+                irish_time = utc_forecast_time.astimezone(ZoneInfo("Europe/Dublin"))
                 forecast_time_str = irish_time.strftime('%a %d, %H:%M')
 
                 # Get a weather emoji
