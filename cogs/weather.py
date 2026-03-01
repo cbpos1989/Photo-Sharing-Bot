@@ -174,11 +174,12 @@ class WeatherCog(commands.Cog):
                 response.raise_for_status()
                 forecast_data = await response.json()
                 print("[LOG] Successfully parsed weather data.")
-                print(forecast_data)
+                # print(forecast_data)
                 spin_timestamp = spin_time.timestamp()
                 closest_forecast = min(forecast_data['list'], key=lambda x: abs(x['dt'] - spin_timestamp))
                 print("closest_forecast = ", closest_forecast['dt'])
                 utc_forecast_time = datetime.fromtimestamp(closest_forecast['dt'], tz=timezone.utc)
+                print("utc_forecast_time = ", utc_forecast_time)
                 weather_desc = closest_forecast['weather'][0]['description'].title()
                 temp = closest_forecast['main']['temp']
                 feels_like = closest_forecast['main']['feels_like']
@@ -187,7 +188,9 @@ class WeatherCog(commands.Cog):
                 rain_3h = closest_forecast.get('rain', {}).get('3h', 0)
 
                 irish_time = utc_forecast_time.astimezone(ZoneInfo("Europe/Dublin"))
+                print("irish_time = ", irish_time)
                 forecast_time_str = irish_time.strftime('%a %d, %H:%M')
+                print("forecast_time_str = ", forecast_time_str)
 
                 # Get a weather emoji
                 icon = closest_forecast['weather'][0]['icon']
