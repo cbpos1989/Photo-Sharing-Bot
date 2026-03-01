@@ -53,19 +53,21 @@ def parse_spin_time_from_title(title: str) -> datetime:
     # Priority 1: Find a specific date like "15th"
     date_match = re.search(r'(\d{1,2})(?:st|nd|rd|th)?', title_lower)
     if date_match:
-        day = int(day_match.group(1))
-        month = now.month
-        year = now.year
-        if day < now.day:
-            month += 1
-            if month > 12:
-                month = 1
-                year += 1
-    try:
-        spin_date = datetime(year, month, day)
-        print(f"[LOG] Found day number only, calculated date: {spin_date.strftime('%Y-%m-%d')}")
-    except ValueError:
-        spin_date = None
+        try:
+            day = int(date_match.group(1))
+            month = now.month
+            year = now.year
+            if day < now.day:
+                month += 1
+                if month > 12:
+                    month = 1
+                    year += 1
+    
+            spin_date = datetime(year, month, day)
+            print(f"[LOG] Found day number only, calculated date: {spin_date.strftime('%Y-%m-%d')}")
+        except ValueError:
+            spin_date = None
+            print(f"[LOG] Could not parse a valid date from '{date_match.group(0)}'.")
 
     # Priority 2: If no date, find a weekday like "Tuesday"
     if not spin_date:
