@@ -61,11 +61,11 @@ def parse_spin_time_from_title(title: str) -> datetime:
             if month > 12:
                 month = 1
                 year += 1
-        try:
-            spin_date = datetime(year, month, day)
-            print(f"[LOG] Found day number only, calculated date: {spin_date.strftime('%Y-%m-%d')}")
-        except ValueError:
-            spin_date = None
+    try:
+        spin_date = datetime(year, month, day)
+        print(f"[LOG] Found day number only, calculated date: {spin_date.strftime('%Y-%m-%d')}")
+    except ValueError:
+        spin_date = None
 
     # Priority 2: If no date, find a weekday like "Tuesday"
     if not spin_date:
